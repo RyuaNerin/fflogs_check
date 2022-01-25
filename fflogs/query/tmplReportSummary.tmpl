@@ -1,0 +1,15 @@
+{
+	reportData {
+		{{ range $.ReportDataInnerList }}
+			{{ if not .Done }}
+				_{{ .Report.Code }}_{{ .Report.FightID }}: report(code: "{{ .Report.Code }}") {
+					playerDetails(fightIDs: {{ .Report.FightID }}, endTime: 9999999999999)
+					fights(fightIDs: {{ .Report.FightID }}) {
+						startTime
+						endTime
+					}
+				}
+			{{ end }}
+		{{ end }}
+	}
+}

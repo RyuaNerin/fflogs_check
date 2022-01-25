@@ -1,0 +1,16 @@
+{
+	worldData {
+		encounter(id: {{ $.EncounterId }}) {
+			name
+		}
+	}
+	characterData {
+		character(name: "{{ $.CharName }}", serverSlug:"{{ $.CharServer }}", serverRegion: "kr") {
+			nonecho: encounterRankings(encounterID: {{ $.EncounterId }})
+
+			{{ if $.IncludeEcho }}
+				echo: encounterRankings(encounterID: {{ $.EncounterId }}, partition: 17)
+			{{ end }}
+		}
+	}
+}
