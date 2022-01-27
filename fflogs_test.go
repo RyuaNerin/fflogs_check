@@ -1,16 +1,26 @@
 package main
 
 import (
+	"context"
+	"ffxiv_check/analysis"
 	"strings"
 	"testing"
-
-	"ffxiv_check/fflogs"
 
 	jsoniter "github.com/json-iterator/go"
 )
 
 func TestGetBuffUsage(t *testing.T) {
-	r, err := fflogs.GetBuffUsage("륜아린", "Moogle", 74, true)
+	opt := analysis.AnalyzeOptions{
+		Context:              context.Background(),
+		CharName:             "륜아린",
+		CharServer:           "Moogle",
+		CharRegion:           "KR",
+		Zone:                 38,
+		EncouterId:           77,
+		AdditionalPartitions: []int{17},
+	}
+
+	r, err := analysis.Analyze(&opt)
 	if err != nil {
 		panic(err)
 	}

@@ -11,7 +11,7 @@ func init() {
 	tr := &http.Transport{
 		MaxConnsPerHost:       0,
 		MaxIdleConns:          0,
-		MaxIdleConnsPerHost:   32,
+		MaxIdleConnsPerHost:   64,
 		ResponseHeaderTimeout: 10 * time.Second,
 		TLSHandshakeTimeout:   10 * time.Second,
 		IdleConnTimeout:       30 * time.Second,

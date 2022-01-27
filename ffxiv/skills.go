@@ -2,6 +2,7 @@ package ffxiv
 
 import (
 	"encoding/csv"
+	"fmt"
 	"io"
 	"os"
 	"strconv"
@@ -29,7 +30,7 @@ func init() {
 
 	sr, _ := utfbom.Skip(fs)
 
-	var defenseBuff []SkillData
+	var columnJob []string
 
 	cr := csv.NewReader(sr)
 	for {
@@ -43,53 +44,33 @@ func init() {
 
 		switch d[0] {
 		case "0":
-			if len(defenseBuff) == 0 {
-				defenseBuff = make([]SkillData, len(d)-2)
+			columnJob = make([]string, len(d))
+			for i := range d {
+				columnJob[i] = fmt.Sprint(d[i])
 			}
-			for i := 2; i < len(d); i++ {
-				defenseBuff[i-2].Name = d[i]
+			for i := 4; i < len(d); i++ {
+				SkillDataEachJob[d[i]] = nil
 			}
 
 		case "1":
-			if len(defenseBuff) == 0 {
-				defenseBuff = make([]SkillData, len(d)-2)
-			}
-			for i := 2; i < len(d); i++ {
-				v, err := strconv.Atoi(d[i])
-				if err != nil {
-					panic(err)
-				}
-				defenseBuff[i-2].ID = v
+			id, err := strconv.Atoi(d[2])
+			if err != nil {
+				panic(err)
 			}
 
-		case "2":
-			if len(defenseBuff) == 0 {
-				defenseBuff = make([]SkillData, len(d)-2)
-			}
-			for i := 2; i < len(d); i++ {
-				if d[i] == "" {
-					defenseBuff[i-2].Cooldown = -1
-				} else {
-					v, err := strconv.Atoi(d[i])
-					if err != nil {
-						panic(err)
-					}
-					defenseBuff[i-2].Cooldown = v
-				}
+			cooldown, _ := strconv.Atoi(d[3])
+
+			SkillDataMap[id] = SkillData{
+				Name:     d[1],
+				ID:       id,
+				Cooldown: cooldown,
 			}
 
-		case "3":
-			arr := make([]int, 0, len(d)-2)
-			for i := 2; i < len(d); i++ {
+			for i := 4; i < len(d); i++ {
 				if d[i] != "" {
-					arr = append(arr, defenseBuff[i-2].ID)
+					SkillDataEachJob[columnJob[i]] = append(SkillDataEachJob[columnJob[i]], id)
 				}
 			}
-			SkillDataEachJob[d[1]] = arr
 		}
-	}
-
-	for _, buff := range defenseBuff {
-		SkillDataMap[buff.ID] = buff
 	}
 }
