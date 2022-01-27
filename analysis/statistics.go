@@ -5,35 +5,37 @@ type Statistics struct {
 	CharServer string `json:"char_server"`
 	CharRegion string `json:"char_region"`
 
-	EncounterId int `json:"encounter_id"`
-
-	// 각 직업군별로...
-	Jobs    []*BuffUsageWithJob `json:"data"`
-	jobsMap map[string]*BuffUsageWithJob
+	Encounter []*StatisticEncounter `json:"data"`
 }
 
-type BuffUsageWithJob struct {
+type StatisticEncounter struct {
+	EncounterID Encounter                `json:"encounter"`
+	Jobs        []*StatisticJob          `json:"data"`
+	jobsMap     map[string]*StatisticJob `json:"-"`
+}
+
+type StatisticJob struct {
 	Job string `json:"job"`
 
 	TotalKills int `json:"kills"` // 전체 킬 수
 
-	Data    []*BuffUsage `json:"usage"`
-	dataMap map[int]*BuffUsage
+	Data    []*StatisticSkill       `json:"data"`
+	dataMap map[int]*StatisticSkill `json:"-"`
 }
 
-type BuffUsage struct {
-	Skill BuffSkillInfo `json:"skill"`
+type StatisticSkill struct {
+	Info BuffSkillInfo `json:"info"`
 
 	Usage    BuffStatistics `json:"usage"`    // 사용 횟수
 	Cooldown BuffStatistics `json:"cooldown"` //쿨타임이였던 시간
 }
 type BuffSkillInfo struct {
-	ID       int    `json:"skill_id"`
-	Name     string `json:"skill_name"`
-	Cooldown int
+	ID       int    `json:"id"`
+	Name     string `json:"name"`
+	Cooldown int    `json:"cooldown"`
 }
 type BuffStatistics struct {
-	data []float32
-	Avg  float32 `json:"avg"`
-	Med  float32 `json:"med"`
+	data []float64 `json:"-"`
+	Avg  float64   `json:"avg"`
+	Med  float64   `json:"med"`
 }

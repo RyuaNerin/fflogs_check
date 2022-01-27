@@ -10,7 +10,8 @@ import (
 )
 
 func init() {
-	os.MkdirAll("./cached-json", 0700)
+	os.MkdirAll("./cached-json/report", 0700)
+	os.MkdirAll("./cached-json/events", 0700)
 }
 
 var (
@@ -85,10 +86,10 @@ func cache(path string, r interface{}, saveMode bool) bool {
 }
 
 func Report(reportId string, r interface{}, saveMode bool) bool {
-	path := fmt.Sprintf("cached-json/report_%s.json", reportId)
+	path := fmt.Sprintf("./cached-json/report/%s.json", reportId)
 	return cache(path, r, saveMode)
 }
 func CastsEvent(reportId string, fightId int, sourceId int, startTime int, r interface{}, saveMode bool) bool {
-	path := fmt.Sprintf("cached-json/event_%s_%d_%d_%d.json", reportId, fightId, sourceId, startTime)
+	path := fmt.Sprintf("./cached-json/events/%s_%d_%d_%d.json", reportId, fightId, sourceId, startTime)
 	return cache(path, r, saveMode)
 }

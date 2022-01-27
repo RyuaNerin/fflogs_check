@@ -32,7 +32,8 @@ type Events struct {
 	Events []struct {
 		Timestamp int `json:"timestamp"`
 		Ability   struct {
-			GUID int `json:"guid"`
+			Name string `json:"name"`
+			GUID int    `json:"guid"`
 		} `json:"ability"`
 	} `json:"events"`
 	NextPageTimestamp *int `json:"nextPageTimestamp"`

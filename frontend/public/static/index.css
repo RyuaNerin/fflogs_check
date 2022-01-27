@@ -1,0 +1,89 @@
+.icon20 {
+    content:url("img/classjobs2_sprite_20.png");
+    width: 20px;
+    height: 20px;
+    --size: 20;
+    float: left;
+    /*
+    margin-right: 6px;
+    margin-left: 2px;
+    */
+}
+
+.spirit {
+    -o-object-fit: none;
+    object-fit: none;
+}
+
+.Paladin {
+    -o-object-position: calc(-5px * var(--size)) calc(-3px * var(--size));
+    object-position:    calc(-5px * var(--size)) calc(-3px * var(--size));
+}
+.Warrior {
+    -o-object-position: calc(-6px * var(--size)) calc(-0px * var(--size));
+    object-position:    calc(-6px * var(--size)) calc(-0px * var(--size));
+}
+.DarkKnight {
+    -o-object-position: calc(-2px * var(--size)) calc(-3px * var(--size));
+    object-position:    calc(-2px * var(--size)) calc(-3px * var(--size));
+}
+.Gunbreaker {
+    -o-object-position: calc(-4px * var(--size)) calc(-3px * var(--size));
+    object-position:    calc(-4px * var(--size)) calc(-3px * var(--size));
+}
+
+.WhiteMage {
+    -o-object-position: calc(-6px * var(--size)) calc(-2px * var(--size));
+    object-position:    calc(-6px * var(--size)) calc(-2px * var(--size));
+}
+.Scholar {
+    -o-object-position: calc(-3px * var(--size)) calc(-5px * var(--size));
+    object-position:    calc(-3px * var(--size)) calc(-5px * var(--size));
+}
+.Astrologian {
+    -o-object-position: calc(-2px * var(--size)) calc(-0px * var(--size));
+    object-position:    calc(-2px * var(--size)) calc(-0px * var(--size));
+}
+
+.Monk {
+    -o-object-position: calc(-5px * var(--size)) calc(-0px * var(--size));
+    object-position:    calc(-5px * var(--size)) calc(-0px * var(--size));
+}
+.Dragoon {
+    -o-object-position: calc(-3px * var(--size)) calc(-3px * var(--size));
+    object-position:    calc(-3px * var(--size)) calc(-3px * var(--size));
+}
+.Ninja {
+    -o-object-position: calc(-5px * var(--size)) calc(-1px * var(--size));
+    object-position:    calc(-5px * var(--size)) calc(-1px * var(--size));
+}
+.Samurai {
+    -o-object-position: calc(-2px * var(--size)) calc(-5px * var(--size));
+    object-position:    calc(-2px * var(--size)) calc(-5px * var(--size));
+}
+
+.Bard {
+    -o-object-position: calc(-2px * var(--size)) calc(-1px * var(--size));
+    object-position:    calc(-2px * var(--size)) calc(-1px * var(--size));
+}
+.Machinist {
+    -o-object-position: calc(-2px * var(--size)) calc(-4px * var(--size));
+    object-position:    calc(-2px * var(--size)) calc(-4px * var(--size));
+}
+.Dancer {
+    -o-object-position: calc(-1px * var(--size)) calc(-3px * var(--size));
+    object-position:    calc(-1px * var(--size)) calc(-3px * var(--size));
+}
+
+.BlackMage {
+    -o-object-position: calc(-0px * var(--size)) calc(-2px * var(--size));
+    object-position:    calc(-0px * var(--size)) calc(-2px * var(--size));
+}
+.Summoner {
+    -o-object-position: calc(-4px * var(--size)) calc(-5px * var(--size));
+    object-position:    calc(-4px * var(--size)) calc(-5px * var(--size));
+}
+.RedMage {
+    -o-object-position: calc(-0px * var(--size)) calc(-5px * var(--size));
+    object-position:    calc(-0px * var(--size)) calc(-5px * var(--size));
+}
