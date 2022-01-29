@@ -7,6 +7,9 @@ type CharacterRanking struct {
 
 	EncounterID   int    `json:"encounterID"`
 	EncounterName string `json:"encounterName"`
+
+	CharacterName string `json:"characterName"`
+	Server        string `json:"server=Fenrir"`
 }
 
 //////////////////////////////////////////////////

@@ -59,8 +59,10 @@ type reportData struct {
 }
 
 type fightData struct {
-	reportID string
-	fightID  int
+	reportID   string
+	fightID    int
+	charName   string
+	charServer string
 
 	startTime int
 	endTime   int
@@ -186,9 +188,11 @@ func (inst *instance) updateReportsWork(w *sync.WaitGroup, ctx context.Context, 
 		}
 
 		dic.fightData[ranking.FightID] = &fightData{
-			job:      spec,
-			reportID: ranking.ReportID,
-			fightID:  ranking.FightID,
+			job:        spec,
+			reportID:   ranking.ReportID,
+			fightID:    ranking.FightID,
+			charName:   ranking.CharacterName,
+			charServer: ranking.Server,
 		}
 
 		inst.encounterNamesLock.Lock()
@@ -275,10 +279,10 @@ func (inst *instance) updateFightsWork(w *sync.WaitGroup, ctx context.Context, c
 					continue
 				}
 
-				if reportFriendly.Server == nil || *reportFriendly.Server != inst.inputCharServer {
+				if reportFriendly.Server == nil || *reportFriendly.Server != fight.charServer {
 					continue
 				}
-				if reportFriendly.Name != inst.inputCharName {
+				if reportFriendly.Name != fight.charName {
 					continue
 				}
 
@@ -343,7 +347,7 @@ func (inst *instance) updateEventsWork(w *sync.WaitGroup, ctx context.Context, c
 	sema.Acquire()
 	defer sema.Release()
 
-	inst.progressString <- fmt.Sprintf(
+	inst.progressString <- fmt.Sprintf(f
 		"전투 기록 분석 중 %.2f %%",
 		2*100/3+float32(atomic.AddInt32(&inst.progress3FightWorked, 1))/float32(inst.progress3FightMax)*100/3,
 	)
