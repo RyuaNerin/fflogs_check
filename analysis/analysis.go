@@ -2,13 +2,12 @@ package analysis
 
 import (
 	"context"
-	"log"
-	"math"
 	"os"
 	"sort"
+	"sync"
+	"time"
 
 	"ffxiv_check/ffxiv"
-	_ "ffxiv_check/share"
 
 	fflogs "github.com/RyuaNerin/go-fflogs"
 	"github.com/joho/godotenv"
@@ -37,27 +36,35 @@ type AnalyzeOptions struct {
 	CharName             string          `json:"char_name"`
 	CharServer           string          `json:"char_server"`
 	CharRegion           string          `json:"char_region"`
-	Encouters            []Encounter     `json:"encounters"`
+	Encouters            []EncounterInfo `json:"encounters"`
 	AdditionalPartitions []int           `json:"partitions"`
+	Jobs                 []string        `json:"jobs"`
 
-	Progress func(p float32) `json:"-"`
+	Progress func(p string) `json:"-"`
 }
 
-type Encounter struct {
+type EncounterInfo struct {
 	ZoneID      int `json:"zone"`
 	EncounterID int `json:"encounter"`
 }
 
-func Analyze(opt *AnalyzeOptions) (*Statistics, error) {
+func Analyze(opt *AnalyzeOptions) (stat *Statistics, err error) {
 	inst := instance{
-		opt: opt,
-
 		inputContext:    opt.Context,
 		inputCharName:   opt.CharName,
 		inputCharServer: opt.CharServer,
 		inputCharRegion: fflogs.Region(opt.CharRegion),
+		inputJob:        make(map[string]bool, len(opt.Jobs)),
 
-		encounter: make([]*encounterData, len(opt.Encouters)),
+		encounter:      make([]*encounterData, len(opt.Encouters)),
+		encounterNames: make(map[int]string, len(opt.Encouters)),
+
+		progressString: make(chan string),
+	}
+	defer close(inst.progressString)
+
+	if inst.inputContext == nil {
+		inst.inputContext = context.Background()
 	}
 	for i, enc := range opt.Encouters {
 		inst.encounter[i] = &encounterData{
@@ -66,25 +73,55 @@ func Analyze(opt *AnalyzeOptions) (*Statistics, error) {
 			reports:     make(map[string]*reportData),
 		}
 	}
+	for _, job := range opt.Jobs {
+		_, ok := ffxiv.JobOrder[job]
+		if ok {
+			inst.inputJob[job] = true
+		}
+	}
 
 	inst.inputAdditionalPartition = append(inst.inputAdditionalPartition, opt.AdditionalPartitions...)
 
-	err := inst.updateReports()
-	if err != nil {
-		return nil, err
+	var w sync.WaitGroup
+	ctx, ctxCancel := context.WithCancel(opt.Context)
+	defer ctxCancel()
+
+	w.Add(1)
+	go func() {
+		defer w.Done()
+
+		nextMessage := time.Now()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+
+			case s := <-inst.progressString:
+				if time.Now().Before(nextMessage) {
+					continue
+				}
+
+				opt.Progress(s)
+				nextMessage = time.Now().Add(200 * time.Millisecond)
+			}
+		}
+	}()
+
+	err = inst.updateReports()
+	if err == nil {
+		err = inst.updateFights()
+		if err == nil {
+			err = inst.updateEvents()
+			if err == nil {
+				stat = inst.buildReport()
+			}
+		}
 	}
 
-	err = inst.updateFights()
-	if err != nil {
-		return nil, err
-	}
+	ctxCancel()
+	w.Wait()
 
-	err = inst.updateEvents()
-	if err != nil {
-		return nil, err
-	}
-
-	return inst.buildReport(), nil
+	return
 }
 
 func (inst *instance) buildReport() (r *Statistics) {
@@ -98,9 +135,10 @@ func (inst *instance) buildReport() (r *Statistics) {
 
 	for i, enc := range inst.encounter {
 		encData := &StatisticEncounter{
-			EncounterID: Encounter{
-				ZoneID:      enc.zoneID,
-				EncounterID: enc.encounterID,
+			Encounter: StatisticEncounterInfo{
+				ID:   enc.encounterID,
+				Zone: enc.zoneID,
+				Name: inst.encounterNames[enc.encounterID],
 			},
 			Jobs:    make([]*StatisticJob, 0, len(ffxiv.JobOrder)),
 			jobsMap: make(map[string]*StatisticJob, len(ffxiv.JobOrder)),
@@ -144,10 +182,10 @@ func (inst *instance) buildReport() (r *Statistics) {
 					totalCooldown := 0
 
 					for _, event := range fight.events {
-						if skillId != 0 && event.id != skillId {
+						if skillId != 0 && event.avilityID != skillId {
 							continue
 						}
-						if skillId == 0 && event.name != "강화약" {
+						if skillId == 0 && (event.avilityType != 1 || event.avilityID < 10000000) {
 							continue
 						}
 
@@ -168,11 +206,6 @@ func (inst *instance) buildReport() (r *Statistics) {
 
 					buffUsage.Usage.data = append(buffUsage.Usage.data, float64(used))
 					buffUsage.Cooldown.data = append(buffUsage.Cooldown.data, float64(totalCooldown)/float64(fightTime)*100.0)
-
-					v := float64(totalCooldown) / float64(fightTime) * 100.0
-					if math.IsNaN(v) {
-						log.Println("ffffffffffffffffffffffffffffffffffffffffff")
-					}
 				}
 			}
 		}
@@ -191,13 +224,6 @@ func (inst *instance) buildReport() (r *Statistics) {
 					}
 					skillData.Usage.Med = skillData.Usage.data[len(skillData.Usage.data)/2]
 					skillData.Usage.Avg = float64(usageSum) / float64(len(skillData.Usage.data))
-
-					if math.IsNaN(skillData.Usage.Med) {
-						log.Println("fffffffffffffffffffff")
-					}
-					if math.IsNaN(skillData.Usage.Avg) {
-						log.Println("fffffffffffffffffffff")
-					}
 				}
 
 				////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -209,13 +235,6 @@ func (inst *instance) buildReport() (r *Statistics) {
 					}
 					skillData.Cooldown.Med = skillData.Cooldown.data[len(skillData.Cooldown.data)/2]
 					skillData.Cooldown.Avg = cooldownSum / float64(len(skillData.Cooldown.data))
-
-					if math.IsNaN(skillData.Cooldown.Med) {
-						log.Println("fffffffffffffffffffff")
-					}
-					if math.IsNaN(skillData.Cooldown.Avg) {
-						log.Println("fffffffffffffffffffff")
-					}
 				}
 
 				////////////////////////////////////////////////////////////////////////////////////////////////////

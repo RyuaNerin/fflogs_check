@@ -1,12 +1,15 @@
 package cache
 
 import (
+	"ffxiv_check/share"
 	"fmt"
+	"hash/fnv"
 	"log"
 	"os"
 	"sync"
 
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 )
 
 func init() {
@@ -16,43 +19,46 @@ func init() {
 
 var (
 	cacheSavingLock sync.RWMutex
-	cacheSaving     = make(map[string]struct{}, 32)
+	cacheSaving     = make(map[uint64]struct{}, 32)
 )
 
-func lock(path string) bool {
+func lock(h uint64) bool {
 	cacheSavingLock.Lock()
 	defer cacheSavingLock.Unlock()
 
-	_, ok := cacheSaving[path]
+	_, ok := cacheSaving[h]
 	if !ok {
-		cacheSaving[path] = struct{}{}
+		cacheSaving[h] = struct{}{}
 	}
-	return ok
+	return !ok
 }
-func unlock(path string) {
+func unlock(h uint64) {
 	cacheSavingLock.Lock()
 	defer cacheSavingLock.Unlock()
 
-	delete(cacheSaving, path)
+	delete(cacheSaving, h)
 }
-func checkSkip(path string) bool {
+func checkSkip(h uint64) bool {
 	cacheSavingLock.RLock()
 	defer cacheSavingLock.RUnlock()
 
-	_, ok := cacheSaving[path]
+	_, ok := cacheSaving[h]
 	return ok
 }
 
 func cache(path string, r interface{}, saveMode bool) bool {
+	h := fnv.New64a()
+	h.Write(share.S2b(path))
+	hash := h.Sum64()
+
 	if saveMode {
-		if lock(path) {
+		if !lock(hash) {
 			return false
 		}
-		defer unlock(path)
+		defer unlock(hash)
 
 		fs, err := os.Create(path)
 		if err != nil {
-			log.Println(err)
 			return false
 		}
 		defer fs.Close()
@@ -65,20 +71,19 @@ func cache(path string, r interface{}, saveMode bool) bool {
 		}
 		return true
 	} else {
-		if checkSkip(path) {
+		if checkSkip(hash) {
 			return false
 		}
 
 		fs, err := os.Open(path)
 		if err != nil {
-			log.Println(err)
 			return false
 		}
 		defer fs.Close()
 
 		err = jsoniter.NewDecoder(fs).Decode(r)
 		if err != nil {
-			log.Println(err)
+			log.Printf("%+v\n", errors.WithStack(err))
 			return false
 		}
 		return true

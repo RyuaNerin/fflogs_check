@@ -2,19 +2,24 @@ package analysis
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"ffxiv_check/cache"
 	"ffxiv_check/share/semaphore"
 
 	fflogs "github.com/RyuaNerin/go-fflogs"
+	"github.com/RyuaNerin/go-fflogs/structure"
+	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 )
 
 const MaxRetries = 3
 
-var sema = semaphore.New(16)
+var sema = semaphore.New(8)
 
 type instance struct {
 	inputContext             context.Context
@@ -22,10 +27,21 @@ type instance struct {
 	inputCharServer          string
 	inputCharRegion          fflogs.Region
 	inputAdditionalPartition []int
+	inputJob                 map[string]bool
 
 	encounter []*encounterData
 
-	opt *AnalyzeOptions
+	encounterNamesLock sync.Mutex
+	encounterNames     map[int]string
+
+	progress1EncounterWorked int32
+	progress1EncounterMax    int
+	progress2ReportWorked    int32
+	progress2ReportMax       int
+	progress3FightWorked     int32
+	progress3FightMax        int
+
+	progressString chan string
 }
 
 type encounterData struct {
@@ -56,9 +72,9 @@ type fightData struct {
 }
 
 type castsEvent struct {
-	id        int
-	name      string
-	timestamp int
+	avilityID   int
+	avilityType int
+	timestamp   int
 }
 
 func (inst *instance) doParallel(
@@ -84,8 +100,9 @@ func (inst *instance) doParallel(
 }
 
 func (inst *instance) updateReports() error {
+	inst.progress1EncounterMax = len(inst.encounter) * (1 + len(inst.inputAdditionalPartition))
 	return inst.doParallel(
-		len(inst.encounter)*(1+len(inst.inputAdditionalPartition)),
+		inst.progress1EncounterMax,
 		func(w *sync.WaitGroup, ctx context.Context, ch chan error) {
 			for _, enc := range inst.encounter {
 				w.Add(1)
@@ -106,6 +123,11 @@ func (inst *instance) updateReportsWork(w *sync.WaitGroup, ctx context.Context, 
 	sema.Acquire()
 	defer sema.Release()
 
+	inst.progressString <- fmt.Sprintf(
+		"전투 기록 분석 중 %.2f %%",
+		float32(atomic.AddInt32(&inst.progress1EncounterWorked, 1))/float32(inst.progress1EncounterMax)*100/3,
+	)
+
 	opt := fflogs.ParsesCharacterOptions{
 		CharacterName: inst.inputCharName,
 		ServerName:    inst.inputCharServer,
@@ -118,12 +140,24 @@ func (inst *instance) updateReportsWork(w *sync.WaitGroup, ctx context.Context, 
 	}
 
 	var resp []CharacterRanking
+	var respRaw interface{}
+	var respError structure.BaseResponse
 	var err error
 	for retries := 0; retries < MaxRetries; retries++ {
-		err := client.Raw.ParsesCharacter(ctx, &opt, &resp)
+		err := client.Raw.ParsesCharacter(ctx, &opt, &respRaw)
 		if err == nil {
+			err = mapstructure.Decode(respRaw, &resp)
+			if err == nil {
+
+				break
+			}
+		}
+
+		err = mapstructure.Decode(respRaw, &respError)
+		if err == nil && strings.HasPrefix(respError.Error, "Invalid character") {
 			break
 		}
+
 		time.Sleep(5 * time.Second)
 	}
 	if err != nil {
@@ -135,6 +169,13 @@ func (inst *instance) updateReportsWork(w *sync.WaitGroup, ctx context.Context, 
 	defer encData.reportsLock.Unlock()
 
 	for _, ranking := range resp {
+		spec := strings.ReplaceAll(ranking.Spec, " ", "")
+
+		_, ok := inst.inputJob[spec]
+		if !ok {
+			continue
+		}
+
 		dic, ok := encData.reports[ranking.ReportID]
 		if !ok {
 			dic = &reportData{
@@ -145,21 +186,25 @@ func (inst *instance) updateReportsWork(w *sync.WaitGroup, ctx context.Context, 
 		}
 
 		dic.fightData[ranking.FightID] = &fightData{
-			job:      ranking.Spec,
+			job:      spec,
 			reportID: ranking.ReportID,
 			fightID:  ranking.FightID,
 		}
+
+		inst.encounterNamesLock.Lock()
+		inst.encounterNames[ranking.EncounterID] = ranking.EncounterName
+		inst.encounterNamesLock.Unlock()
 	}
 }
 
 func (inst *instance) updateFights() error {
-	count := 0
+	inst.progress2ReportMax = 0
 	for _, enc := range inst.encounter {
-		count += len(enc.reports)
+		inst.progress2ReportMax += len(enc.reports)
 	}
 
 	return inst.doParallel(
-		count,
+		inst.progress2ReportMax,
 		func(w *sync.WaitGroup, ctx context.Context, ch chan error) {
 			for _, enc := range inst.encounter {
 				for _, report := range enc.reports {
@@ -176,6 +221,11 @@ func (inst *instance) updateFightsWork(w *sync.WaitGroup, ctx context.Context, c
 
 	sema.Acquire()
 	defer sema.Release()
+
+	inst.progressString <- fmt.Sprintf(
+		"전투 기록 분석 중 %.2f %%",
+		100/3+float32(atomic.AddInt32(&inst.progress2ReportWorked, 1))/float32(inst.progress2ReportMax)*100/3,
+	)
 
 	opt := fflogs.ReportFightsOptions{
 		Code: report.reportID,
@@ -261,15 +311,15 @@ func (inst *instance) updateFightsWork(w *sync.WaitGroup, ctx context.Context, c
 }
 
 func (inst *instance) updateEvents() error {
-	totalFights := 0
+	inst.progress3FightMax = 0
 	for _, enc := range inst.encounter {
 		for _, report := range enc.reports {
-			totalFights += len(report.fightData)
+			inst.progress3FightMax += len(report.fightData)
 		}
 	}
 
 	return inst.doParallel(
-		totalFights,
+		inst.progress3FightMax,
 		func(w *sync.WaitGroup, ctx context.Context, ch chan error) {
 			for _, enc := range inst.encounter {
 				for _, report := range enc.reports {
@@ -286,8 +336,17 @@ func (inst *instance) updateEvents() error {
 func (inst *instance) updateEventsWork(w *sync.WaitGroup, ctx context.Context, ch chan error, fight *fightData) {
 	defer w.Done()
 
+	if fight.sourceId == 0 {
+		return
+	}
+
 	sema.Acquire()
 	defer sema.Release()
+
+	inst.progressString <- fmt.Sprintf(
+		"전투 기록 분석 중 %.2f %%",
+		2*100/3+float32(atomic.AddInt32(&inst.progress3FightWorked, 1))/float32(inst.progress3FightMax)*100/3,
+	)
 
 	startTime := fight.startTime
 
@@ -319,15 +378,20 @@ func (inst *instance) updateEventsWork(w *sync.WaitGroup, ctx context.Context, c
 		}
 
 		len := len(fight.events)
-		new := make([]castsEvent, len+resp.Count)
+		new := make([]castsEvent, len, len+resp.Count)
 		copy(fight.events, new)
 		fight.events = new
 
-		for i, event := range resp.Events {
-			fight.events[len+i] = castsEvent{
-				id:        event.Ability.GUID,
-				name:      event.Ability.Name,
-				timestamp: event.Timestamp,
+		for _, event := range resp.Events {
+			if event.Type == "cast" {
+				fight.events = append(
+					fight.events,
+					castsEvent{
+						avilityID:   event.Ability.GUID,
+						avilityType: event.Ability.Type,
+						timestamp:   event.Timestamp,
+					},
+				)
 			}
 		}
 

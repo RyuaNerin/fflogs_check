@@ -4,6 +4,9 @@ type CharacterRanking struct {
 	Spec     string `json:"spec"`
 	ReportID string `json:"reportID"`
 	FightID  int    `json:"fightID"`
+
+	EncounterID   int    `json:"encounterID"`
+	EncounterName string `json:"encounterName"`
 }
 
 //////////////////////////////////////////////////
@@ -30,10 +33,11 @@ type Report struct {
 type Events struct {
 	Count  int `json:"count"`
 	Events []struct {
-		Timestamp int `json:"timestamp"`
+		Timestamp int    `json:"timestamp"`
+		Type      string `json:"type"`
 		Ability   struct {
-			Name string `json:"name"`
-			GUID int    `json:"guid"`
+			GUID int `json:"guid"`
+			Type int `json:"type"`
 		} `json:"ability"`
 	} `json:"events"`
 	NextPageTimestamp *int `json:"nextPageTimestamp"`

@@ -9,9 +9,15 @@ type Statistics struct {
 }
 
 type StatisticEncounter struct {
-	EncounterID Encounter                `json:"encounter"`
-	Jobs        []*StatisticJob          `json:"data"`
-	jobsMap     map[string]*StatisticJob `json:"-"`
+	Encounter StatisticEncounterInfo   `json:"encounter"`
+	Jobs      []*StatisticJob          `json:"data"`
+	jobsMap   map[string]*StatisticJob `json:"-"`
+}
+
+type StatisticEncounterInfo struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+	Zone int    `json:"zone"`
 }
 
 type StatisticJob struct {

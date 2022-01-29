@@ -1,7 +1,9 @@
 package main
 
 import (
-	"ffxiv_check/frontend"
+	"net/http"
+
+	_ "ffxiv_check/share"
 
 	"github.com/gin-gonic/gin"
 )
@@ -9,7 +11,13 @@ import (
 func main() {
 	g := gin.New()
 
-	frontend.Route(g)
+	g.Use(gin.ErrorLogger())
+	g.Use(gin.Recovery())
+
+	g.NoMethod(func(c *gin.Context) { c.Status(http.StatusNotFound) })
+	g.NoRoute(func(c *gin.Context) { c.Status(http.StatusNotFound) })
+
+	g.GET("/analysis", routeRequest)
 
 	g.Run("127.0.0.1:5555")
 }
