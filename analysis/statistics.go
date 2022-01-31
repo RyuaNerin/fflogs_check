@@ -39,6 +39,7 @@ type BuffSkillInfo struct {
 	ID       int    `json:"id"`
 	Name     string `json:"name"`
 	Cooldown int    `json:"cooldown"`
+	Icon     string `json:"icon"`
 }
 type BuffStatistics struct {
 	data []float64 `json:"-"`

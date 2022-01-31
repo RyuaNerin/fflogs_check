@@ -94,7 +94,7 @@ func Report(reportId string, r interface{}, saveMode bool) bool {
 	path := fmt.Sprintf("./cached-json/report/%s.json", reportId)
 	return cache(path, r, saveMode)
 }
-func CastsEvent(reportId string, fightId int, sourceId int, startTime int, r interface{}, saveMode bool) bool {
-	path := fmt.Sprintf("./cached-json/events/%s_%d_%d_%d.json", reportId, fightId, sourceId, startTime)
+func CastsEvent(reportId string, fightId int, sourceId int, startTime int, endTime int, r interface{}, saveMode bool) bool {
+	path := fmt.Sprintf("./cached-json/events/%s_fid_%d_sid_%d_st_%d_et_%d.json", reportId, fightId, sourceId, startTime, endTime)
 	return cache(path, r, saveMode)
 }

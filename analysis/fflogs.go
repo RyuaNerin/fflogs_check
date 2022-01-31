@@ -347,7 +347,7 @@ func (inst *instance) updateEventsWork(w *sync.WaitGroup, ctx context.Context, c
 	sema.Acquire()
 	defer sema.Release()
 
-	inst.progressString <- fmt.Sprintf(f
+	inst.progressString <- fmt.Sprintf(
 		"전투 기록 분석 중 %.2f %%",
 		2*100/3+float32(atomic.AddInt32(&inst.progress3FightWorked, 1))/float32(inst.progress3FightMax)*100/3,
 	)
@@ -364,7 +364,7 @@ func (inst *instance) updateEventsWork(w *sync.WaitGroup, ctx context.Context, c
 	var resp Events
 
 	for {
-		if !cache.CastsEvent(fight.reportID, fight.fightID, fight.sourceId, startTime, &resp, false) {
+		if !cache.CastsEvent(fight.reportID, fight.fightID, fight.sourceId, startTime, fight.endTime, &resp, false) {
 			var err error
 			for retries := 0; retries < MaxRetries; retries++ {
 				err = client.Raw.ReportEventsCasts(ctx, &opt, &resp)
@@ -378,7 +378,7 @@ func (inst *instance) updateEventsWork(w *sync.WaitGroup, ctx context.Context, c
 				return
 			}
 
-			cache.CastsEvent(fight.reportID, fight.fightID, fight.sourceId, startTime, &resp, true)
+			cache.CastsEvent(fight.reportID, fight.fightID, fight.sourceId, startTime, fight.endTime, &resp, true)
 		}
 
 		len := len(fight.events)

@@ -17,7 +17,7 @@ func main() {
 	g.NoMethod(func(c *gin.Context) { c.Status(http.StatusNotFound) })
 	g.NoRoute(func(c *gin.Context) { c.Status(http.StatusNotFound) })
 
-	g.GET("/analysis", routeRequest)
+	g.GET("/api/analysis", routeRequest)
 
 	g.Run("127.0.0.1:5555")
 }

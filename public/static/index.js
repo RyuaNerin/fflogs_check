@@ -89,8 +89,8 @@ document.addEventListener(
                                     'jobs'        : jobs,
                                 };
                                 
-                                //let socket = new WebSocket((location.protocol == "https:" ? "wss://" : "ws://") + location.host + "/analysis");
-                                let socket = new WebSocket("ws://127.0.0.1:5555/analysis");
+                                //let socket = new WebSocket((location.protocol == "https:" ? "wss://" : "ws://") + location.host + "/api/analysis");
+                                let socket = new WebSocket("ws://127.0.0.1:5555/api/analysis");
                                 
                                 socket.onopen = function(e) {
                                     socket.send(token);
@@ -115,7 +115,7 @@ document.addEventListener(
                                 
                                 socket.onmessage = function(event) {
                                     let resp = JSON.parse(event.data);
-                            
+                                    
                                     switch (resp.event) {
                                         case "ready":
                                             socket.send(JSON.stringify(requestData));

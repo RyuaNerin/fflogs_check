@@ -245,7 +245,8 @@ func (inst *instance) buildReport() (r *Statistics) {
 		sort.Slice(
 			encData.Jobs,
 			func(i, k int) bool {
-				return ffxiv.JobOrder[encData.Jobs[i].Job] > ffxiv.JobOrder[encData.Jobs[k].Job]
+				//return ffxiv.JobOrder[encData.Jobs[i].Job] > ffxiv.JobOrder[encData.Jobs[k].Job]
+				return encData.Jobs[i].TotalKills > encData.Jobs[k].TotalKills
 			},
 		)
 		for _, job := range encData.jobsMap {
