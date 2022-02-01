@@ -77,6 +77,8 @@ type castsEvent struct {
 	avilityID   int
 	avilityType int
 	timestamp   int
+
+	icon____ string
 }
 
 func (inst *instance) doParallel(
@@ -426,6 +428,7 @@ func (inst *instance) updateEventsWork(ctx context.Context, fight *fightData) er
 						avilityID:   event.Ability.GUID,
 						avilityType: event.Ability.Type,
 						timestamp:   event.Timestamp,
+						icon____:    event.Ability.AbilityIcon,
 					},
 				)
 			}

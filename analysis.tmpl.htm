@@ -38,7 +38,7 @@
                                 role="tab"
                                 aria-controls="tab-{{ $i }}-{{ $ii }}"
                                 aria-selected="true"
-                        ><img class="icon20 spirit {{ $vv.Job }}"> {{ $vv.TotalKills }}</button>
+                        ><img class="icon20 job {{ $vv.Job }}"> {{ $vv.TotalKills }}</button>
                     </li>
                     {{ end }}
                 </ul>
@@ -68,7 +68,7 @@
                             <tbody>
                                 {{ range $iii, $vvv := $vv.Data }}
                                 <tr>
-                                    <th scope="row">{{ $vvv.Info.Name }}</th>
+                                    <th scope="row"><img src="https://assets.rpglogs.com/img/ff/abilities/{{ $vvv.Info.Icon }}" class="icon20"> {{ $vvv.Info.Name }}</th>
                                     
                                     {{ if eq $vvv.Info.Cooldown 0 }}
                                     <td></td>

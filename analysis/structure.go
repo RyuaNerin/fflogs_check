@@ -29,6 +29,14 @@ type Report struct {
 			ID int `json:"id"`
 		} `json:"fights"`
 	} `json:"friendlies"`
+	FriendlyPets []struct {
+		ID       int    `json:"id"`
+		Type     string `json:"type"`
+		PetOwner int    `json:"petOwner"`
+		Fights   []struct {
+			ID int `json:"id"`
+		} `json:"fights"`
+	} `json:"friendlyPets"`
 }
 
 //////////////////////////////////////////////////

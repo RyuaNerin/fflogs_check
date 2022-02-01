@@ -171,6 +171,7 @@ func (inst *instance) buildReport() (r *Statistics) {
 								ID:       skillInfo.ID,
 								Cooldown: skillInfo.Cooldown,
 								Name:     skillInfo.Name,
+								//Icon:     skillInfo.IconUrl,
 							},
 						}
 						job.Data = append(job.Data, buffUsage)
@@ -187,6 +188,10 @@ func (inst *instance) buildReport() (r *Statistics) {
 						}
 						if skillId == 0 && (event.avilityType != 1 || event.avilityID < 10000000) {
 							continue
+						}
+
+						if buffUsage.Info.Icon == "" {
+							buffUsage.Info.Icon = event.icon____
 						}
 
 						whenSeconds := event.timestamp - fight.startTime

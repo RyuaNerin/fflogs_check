@@ -1,16 +1,15 @@
 .icon20 {
-    content:url("img/classjobs2_sprite_20.png");
     width: 20px;
     height: 20px;
     --size: 20;
     float: left;
     margin-right: 6px;
     margin-left: 2px;
-    /*
-    */
 }
 
-.spirit {
+.job {
+    content:url("img/classjobs2_sprite_20.png");
+
     -o-object-fit: none;
     object-fit: none;
 }
