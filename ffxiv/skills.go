@@ -14,6 +14,7 @@ type SkillData struct {
 	ID       int
 	Name     string
 	Cooldown int
+	IconUrl  string
 }
 
 var (
@@ -48,7 +49,7 @@ func init() {
 			for i := range d {
 				columnJob[i] = fmt.Sprint(d[i])
 			}
-			for i := 4; i < len(d); i++ {
+			for i := 5; i < len(d); i++ {
 				SkillDataEachJob[d[i]] = nil
 			}
 
@@ -64,9 +65,10 @@ func init() {
 				Name:     d[1],
 				ID:       id,
 				Cooldown: cooldown,
+				IconUrl:  d[4],
 			}
 
-			for i := 4; i < len(d); i++ {
+			for i := 5; i < len(d); i++ {
 				if d[i] != "" {
 					SkillDataEachJob[columnJob[i]] = append(SkillDataEachJob[columnJob[i]], id)
 				}

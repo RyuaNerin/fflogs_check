@@ -16,7 +16,7 @@ import (
 var (
 	queueLock sync.Mutex
 	queue     = make([]*queueData, 0, 16)
-	queueWake = make(chan struct{})
+	queueWake = make(chan struct{}, 1)
 )
 
 type queueData struct {

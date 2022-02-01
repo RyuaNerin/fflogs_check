@@ -1,5 +1,7 @@
 github.com/RyuaNerin/go-fflogs v0.0.0-20220126135801-559f19edc42e h1:JY+8294tQr4TiIuCfMKg7vsUbcOXYj8FY8L42Yw/9Go=
 github.com/RyuaNerin/go-fflogs v0.0.0-20220126135801-559f19edc42e/go.mod h1:BOiOVsPTJEOS64ObSiczpZM3zoUSEhXuB29/O9Wj2zk=
+github.com/alitto/pond v1.7.0 h1:o/V4qQmhT6EOXkg1PdCz2tF9X3RjMTU6hhlHq1k2t1g=
+github.com/alitto/pond v1.7.0/go.mod h1:/TYBaKCXvQ8Qiy3TfOoKeu6K7AVAhMpvu4itSpGdws0=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=

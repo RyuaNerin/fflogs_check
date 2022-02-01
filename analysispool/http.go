@@ -5,7 +5,6 @@ import (
 	"context"
 	"log"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -69,11 +68,11 @@ func Do(ctx context.Context, ws *websocket.Conn) {
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	var w sync.WaitGroup
-	w.Add(1)
-
+	writeDone := make(chan struct{})
 	go func() {
-		defer w.Done()
+		defer func() {
+			writeDone <- struct{}{}
+		}()
 
 		ticker := time.NewTicker(5 * time.Second)
 		defer ticker.Stop()
@@ -112,16 +111,17 @@ func Do(ctx context.Context, ws *websocket.Conn) {
 	queueLock.Lock()
 	q.Reorder(len(queue))
 	if len(queue) == 0 {
-		queueWake <- struct{}{}
+		select {
+		case queueWake <- struct{}{}:
+		default:
+		}
 	}
 	queue = append(queue, &q)
 	queueLock.Unlock()
 
 	<-q.done
-	log.Println("sent")
-
 	close(q.msg)
-	w.Wait()
+	<-writeDone
 
 	err = ws.WriteMessage(websocket.CloseMessage, websockEmptyClosure)
 	if err != nil {

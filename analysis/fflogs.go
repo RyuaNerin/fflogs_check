@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"ffxiv_check/cache"
-	"ffxiv_check/share/semaphore"
 
 	fflogs "github.com/RyuaNerin/go-fflogs"
 	"github.com/RyuaNerin/go-fflogs/structure"
@@ -17,9 +16,10 @@ import (
 	"github.com/pkg/errors"
 )
 
-const MaxRetries = 3
-
-var sema = semaphore.New(8)
+const (
+	MaxRetries = 3
+	Workers    = 8
+)
 
 type instance struct {
 	inputContext             context.Context
@@ -80,51 +80,91 @@ type castsEvent struct {
 }
 
 func (inst *instance) doParallel(
-	count int,
-	f func(w *sync.WaitGroup, ctx context.Context, ch chan error),
+	addToPool func(ctx context.Context, ch chan interface{}),
+	work func(ctx context.Context, data interface{}) error,
 ) error {
-	context, contextCancel := context.WithCancel(inst.inputContext)
+	ctx, ctxCancel := context.WithCancel(inst.inputContext)
+	defer ctxCancel()
 
-	chanError := make(chan error, count)
+	chanData := make(chan interface{})
+	chanError := make(chan error)
 
-	var w sync.WaitGroup
-	f(&w, context, chanError)
-
+	chanAdded := make(chan struct{})
 	go func() {
-		w.Wait()
-		chanError <- nil
+		addToPool(ctx, chanData)
+		close(chanAdded)
 	}()
 
-	err := <-chanError
-	contextCancel()
+	var w sync.WaitGroup
+	for i := 0; i < Workers; i++ {
+		w.Add(1)
+		go func() {
+			defer w.Done()
+
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case data, ok := <-chanData:
+					if !ok {
+						return
+					}
+					err := work(ctx, data)
+					if err != nil {
+						select {
+						case chanError <- err:
+						default:
+						}
+						return
+					}
+				}
+			}
+		}()
+	}
+
+	var err error
+	select {
+	case <-chanAdded:
+	case err = <-chanError:
+		ctxCancel()
+	}
+	close(chanData)
 	w.Wait()
+
 	return err
 }
 
 func (inst *instance) updateReports() error {
+	type dataReports struct {
+		encData *encounterData
+		part    int
+	}
+
 	inst.progress1EncounterMax = len(inst.encounter) * (1 + len(inst.inputAdditionalPartition))
 	return inst.doParallel(
-		inst.progress1EncounterMax,
-		func(w *sync.WaitGroup, ctx context.Context, ch chan error) {
+		func(ctx context.Context, chanJobs chan interface{}) {
 			for _, enc := range inst.encounter {
-				w.Add(1)
-				go inst.updateReportsWork(w, ctx, ch, enc, -1)
+				chanJobs <- &dataReports{
+					encData: enc,
+					part:    -1,
+				}
 
 				for _, partition := range inst.inputAdditionalPartition {
-					w.Add(1)
-					go inst.updateReportsWork(w, ctx, ch, enc, partition)
+					chanJobs <- &dataReports{
+						encData: enc,
+						part:    partition,
+					}
 				}
 			}
+		},
+		func(ctx context.Context, data interface{}) error {
+			d := data.(*dataReports)
+			return inst.updateReportsWork(ctx, d.encData, d.part)
 		},
 	)
 }
 
-func (inst *instance) updateReportsWork(w *sync.WaitGroup, ctx context.Context, ch chan error, encData *encounterData, part int) {
-	defer w.Done()
-
-	sema.Acquire()
-	defer sema.Release()
-
+func (inst *instance) updateReportsWork(ctx context.Context, encData *encounterData, part int) error {
 	inst.progressString <- fmt.Sprintf(
 		"전투 기록 분석 중 %.2f %%",
 		float32(atomic.AddInt32(&inst.progress1EncounterWorked, 1))/float32(inst.progress1EncounterMax)*100/3,
@@ -163,8 +203,7 @@ func (inst *instance) updateReportsWork(w *sync.WaitGroup, ctx context.Context, 
 		time.Sleep(5 * time.Second)
 	}
 	if err != nil {
-		ch <- errors.WithStack(err)
-		return
+		return errors.WithStack(err)
 	}
 
 	encData.reportsLock.Lock()
@@ -199,6 +238,8 @@ func (inst *instance) updateReportsWork(w *sync.WaitGroup, ctx context.Context, 
 		inst.encounterNames[ranking.EncounterID] = ranking.EncounterName
 		inst.encounterNamesLock.Unlock()
 	}
+
+	return nil
 }
 
 func (inst *instance) updateFights() error {
@@ -208,24 +249,20 @@ func (inst *instance) updateFights() error {
 	}
 
 	return inst.doParallel(
-		inst.progress2ReportMax,
-		func(w *sync.WaitGroup, ctx context.Context, ch chan error) {
+		func(ctx context.Context, chanJobs chan interface{}) {
 			for _, enc := range inst.encounter {
 				for _, report := range enc.reports {
-					w.Add(1)
-					go inst.updateFightsWork(w, ctx, ch, report)
+					chanJobs <- report
 				}
 			}
+		},
+		func(ctx context.Context, data interface{}) error {
+			return inst.updateFightsWork(ctx, data.(*reportData))
 		},
 	)
 }
 
-func (inst *instance) updateFightsWork(w *sync.WaitGroup, ctx context.Context, ch chan error, report *reportData) {
-	defer w.Done()
-
-	sema.Acquire()
-	defer sema.Release()
-
+func (inst *instance) updateFightsWork(ctx context.Context, report *reportData) error {
 	inst.progressString <- fmt.Sprintf(
 		"전투 기록 분석 중 %.2f %%",
 		100/3+float32(atomic.AddInt32(&inst.progress2ReportWorked, 1))/float32(inst.progress2ReportMax)*100/3,
@@ -246,8 +283,7 @@ func (inst *instance) updateFightsWork(w *sync.WaitGroup, ctx context.Context, c
 			time.Sleep(5 * time.Second)
 		}
 		if err != nil {
-			ch <- errors.WithStack(err)
-			return
+			return errors.WithStack(err)
 		}
 
 		cache.Report(report.reportID, &resp, true)
@@ -306,12 +342,13 @@ func (inst *instance) updateFightsWork(w *sync.WaitGroup, ctx context.Context, c
 			time.Sleep(5 * time.Second)
 		}
 		if err != nil {
-			ch <- errors.WithStack(err)
-			return
+			return errors.WithStack(err)
 		}
 
 		cache.Report(report.reportID, &resp, true)
 	}
+
+	return nil
 }
 
 func (inst *instance) updateEvents() error {
@@ -323,30 +360,26 @@ func (inst *instance) updateEvents() error {
 	}
 
 	return inst.doParallel(
-		inst.progress3FightMax,
-		func(w *sync.WaitGroup, ctx context.Context, ch chan error) {
+		func(ctx context.Context, chanJobs chan interface{}) {
 			for _, enc := range inst.encounter {
 				for _, report := range enc.reports {
 					for _, fight := range report.fightData {
-						w.Add(1)
-						go inst.updateEventsWork(w, ctx, ch, fight)
+						if fight.sourceId == 0 {
+							continue
+						}
+
+						chanJobs <- fight
 					}
 				}
 			}
 		},
+		func(ctx context.Context, data interface{}) error {
+			return inst.updateEventsWork(ctx, data.(*fightData))
+		},
 	)
 }
 
-func (inst *instance) updateEventsWork(w *sync.WaitGroup, ctx context.Context, ch chan error, fight *fightData) {
-	defer w.Done()
-
-	if fight.sourceId == 0 {
-		return
-	}
-
-	sema.Acquire()
-	defer sema.Release()
-
+func (inst *instance) updateEventsWork(ctx context.Context, fight *fightData) error {
 	inst.progressString <- fmt.Sprintf(
 		"전투 기록 분석 중 %.2f %%",
 		2*100/3+float32(atomic.AddInt32(&inst.progress3FightWorked, 1))/float32(inst.progress3FightMax)*100/3,
@@ -374,8 +407,7 @@ func (inst *instance) updateEventsWork(w *sync.WaitGroup, ctx context.Context, c
 				time.Sleep(5 * time.Second)
 			}
 			if err != nil {
-				ch <- errors.WithStack(err)
-				return
+				return errors.WithStack(err)
 			}
 
 			cache.CastsEvent(fight.reportID, fight.fightID, fight.sourceId, startTime, fight.endTime, &resp, true)
@@ -404,4 +436,6 @@ func (inst *instance) updateEventsWork(w *sync.WaitGroup, ctx context.Context, c
 		}
 		startTime = *resp.NextPageTimestamp
 	}
+
+	return nil
 }
