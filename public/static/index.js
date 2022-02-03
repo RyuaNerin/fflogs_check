@@ -10,14 +10,10 @@ let ENCOUNTER_NAME = {
 };
 
 let ENCOUNTER_REQUEST_DATA = {
-    'eden': [ { 'zone': 38, 'encounter':   73 },
-              { 'zone': 38, 'encounter':   74 },
-              { 'zone': 38, 'encounter':   75 },
-              { 'zone': 38, 'encounter':   76 },
-              { 'zone': 38, 'encounter':   77 }, ],
-    'tea':  [ { 'zone': 32, 'encounter': 1050 }, ],
-    'uwu':  [ { 'zone': 30, 'encounter': 1048 }, ],
-    'ucob': [ { 'zone': 30, 'encounter': 1047 }, ],
+    'eden': [ 73, 74, 75, 76, 77, ],
+    'tea':  [ 1050, ],
+    'uwu':  [ 1048, ],
+    'ucob': [ 1047, ],
 };
 
 let ALL_JOBS = [

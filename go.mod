@@ -15,6 +15,8 @@ require (
 
 require (
 	github.com/alitto/pond v1.7.0 // indirect
+	github.com/gammazero/deque v0.1.0 // indirect
+	github.com/gammazero/workerpool v1.1.2 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect

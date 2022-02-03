@@ -1,0 +1,20 @@
+{
+	reportData {
+		{{ range $ }}
+		{{ .Hash }}: report(code: "{{ .ReportID }}") {
+			fights(fightIDs: [{{ .FightIDs }}]) {
+				id
+				startTime
+				endTime				
+				friendlyPlayers
+			}
+			masterData{
+				actors {
+					id
+					name
+				}
+			}
+		}
+		{{ end }}
+	}
+}

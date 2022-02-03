@@ -7,28 +7,23 @@ import (
 	"sync"
 	"time"
 
+	"ffxiv_check/analysis/oauth"
 	"ffxiv_check/ffxiv"
 
-	fflogs "github.com/RyuaNerin/go-fflogs"
 	"github.com/joho/godotenv"
 )
 
 var (
-	client *fflogs.Client
+	client *oauth.Client
 )
 
 func init() {
 	godotenv.Load(".env")
 
-	opt := fflogs.ClientOpt{
-		ApiKey: os.Getenv("FFLOGS_V1_APIKEY"),
-	}
-
-	var err error
-	client, err = fflogs.NewClient(&opt)
-	if err != nil {
-		panic(err)
-	}
+	client = oauth.New(
+		os.Getenv("FFLOGS_V2_OAUTH2_CLIENT_ID"),
+		os.Getenv("FFLOGS_V2_OAUTH2_CLIENT_SECRET"),
+	)
 }
 
 type AnalyzeOptions struct {
@@ -36,51 +31,45 @@ type AnalyzeOptions struct {
 	CharName             string          `json:"char_name"`
 	CharServer           string          `json:"char_server"`
 	CharRegion           string          `json:"char_region"`
-	Encouters            []EncounterInfo `json:"encounters"`
+	Encouters            []int           `json:"encounters"`
 	AdditionalPartitions []int           `json:"partitions"`
 	Jobs                 []string        `json:"jobs"`
 
 	Progress func(p string) `json:"-"`
 }
 
-type EncounterInfo struct {
-	ZoneID      int `json:"zone"`
-	EncounterID int `json:"encounter"`
-}
+func Analyze(opt *AnalyzeOptions) (stat *Statistics, ok bool) {
+	inst := analysisInstance{
+		ctx: opt.Context,
 
-func Analyze(opt *AnalyzeOptions) (stat *Statistics, err error) {
-	inst := instance{
-		inputContext:    opt.Context,
-		inputCharName:   opt.CharName,
-		inputCharServer: opt.CharServer,
-		inputCharRegion: fflogs.Region(opt.CharRegion),
-		inputJob:        make(map[string]bool, len(opt.Jobs)),
+		CharName:     opt.CharName,
+		CharServer:   opt.CharServer,
+		CharRegion:   opt.CharRegion,
+		CharJobs:     make(map[string]bool, len(opt.Jobs)),
+		EncounterIDs: make([]int, len(opt.Encouters)),
 
-		encounter:      make([]*encounterData, len(opt.Encouters)),
+		Reports: make(map[string]*analysisReport),
+		Fights:  make(map[fightKey]*analysisFight),
+
 		encounterNames: make(map[int]string, len(opt.Encouters)),
 
 		progressString: make(chan string),
 	}
 	defer close(inst.progressString)
 
-	if inst.inputContext == nil {
-		inst.inputContext = context.Background()
-	}
-	for i, enc := range opt.Encouters {
-		inst.encounter[i] = &encounterData{
-			zoneID:      enc.ZoneID,
-			encounterID: enc.EncounterID,
-			reports:     make(map[string]*reportData),
-		}
+	copy(inst.EncounterIDs, opt.Encouters)
+
+	if inst.ctx == nil {
+		inst.ctx = context.Background()
 	}
 	for _, job := range opt.Jobs {
 		_, ok := ffxiv.JobOrder[job]
 		if ok {
-			inst.inputJob[job] = true
+			inst.CharJobs[job] = true
 		}
 	}
 
-	inst.inputAdditionalPartition = append(inst.inputAdditionalPartition, opt.AdditionalPartitions...)
+	inst.AdditionalPartition = append(inst.AdditionalPartition, opt.AdditionalPartitions...)
 
 	var w sync.WaitGroup
 	ctx, ctxCancel := context.WithCancel(opt.Context)
@@ -107,16 +96,17 @@ func Analyze(opt *AnalyzeOptions) (stat *Statistics, err error) {
 		}
 	}()
 
-	err = inst.updateReports()
-	if err == nil {
-		err = inst.updateFights()
-		if err == nil {
-			err = inst.updateEvents()
-			if err == nil {
-				stat = inst.buildReport()
-			}
-		}
+	if !inst.updateReports() {
+		return nil, false
 	}
+	if !inst.updateFights() {
+		return nil, false
+	}
+	if !inst.updateEvents() {
+		return nil, false
+	}
+
+	stat = inst.buildReport()
 
 	ctxCancel()
 	w.Wait()
@@ -124,95 +114,96 @@ func Analyze(opt *AnalyzeOptions) (stat *Statistics, err error) {
 	return
 }
 
-func (inst *instance) buildReport() (r *Statistics) {
+func (inst *analysisInstance) buildReport() (r *Statistics) {
 	r = &Statistics{
-		CharName:   inst.inputCharName,
-		CharServer: inst.inputCharServer,
-		CharRegion: inst.inputCharRegion.String(),
+		CharName:   inst.CharName,
+		CharServer: inst.CharServer,
+		CharRegion: inst.CharRegion,
 
-		Encounter: make([]*StatisticEncounter, len(inst.encounter)),
+		Encounter: make([]*StatisticEncounter, 0, len(inst.EncounterIDs)),
 	}
 
-	for i, enc := range inst.encounter {
-		encData := &StatisticEncounter{
-			Encounter: StatisticEncounterInfo{
-				ID:   enc.encounterID,
-				Zone: enc.zoneID,
-				Name: inst.encounterNames[enc.encounterID],
-			},
-			Jobs:    make([]*StatisticJob, 0, len(ffxiv.JobOrder)),
-			jobsMap: make(map[string]*StatisticJob, len(ffxiv.JobOrder)),
-		}
-		r.Encounter[i] = encData
+	encounterMap := make(map[int]*StatisticEncounter)
 
-		for _, report := range enc.reports {
-			for _, fight := range report.fightData {
-				job, ok := encData.jobsMap[fight.job]
-				if !ok {
-					job = &StatisticJob{
-						Job:     fight.job,
-						Data:    make([]*StatisticSkill, 0, 10),
-						dataMap: make(map[int]*StatisticSkill, 10),
-					}
-					encData.Jobs = append(encData.Jobs, job)
-					encData.jobsMap[fight.job] = job
-				}
-				job.TotalKills++
-
-				fightTime := fight.endTime - fight.startTime
-
-				for _, skillId := range ffxiv.SkillDataEachJob[fight.job] {
-					skillInfo := ffxiv.SkillDataMap[skillId]
-
-					buffUsage, ok := job.dataMap[skillId]
-					if !ok {
-						buffUsage = &StatisticSkill{
-							Info: BuffSkillInfo{
-								ID:       skillInfo.ID,
-								Cooldown: skillInfo.Cooldown,
-								Name:     skillInfo.Name,
-								//Icon:     skillInfo.IconUrl,
-							},
-						}
-						job.Data = append(job.Data, buffUsage)
-						job.dataMap[skillId] = buffUsage
-					}
-
-					used := 0
-					nextCooldown := 0
-					totalCooldown := 0
-
-					for _, event := range fight.events {
-						if skillId != 0 && event.avilityID != skillId {
-							continue
-						}
-						if skillId == 0 && (event.avilityType != 1 || event.avilityID < 10000000) {
-							continue
-						}
-
-						if buffUsage.Info.Icon == "" {
-							buffUsage.Info.Icon = event.icon____
-						}
-
-						whenSeconds := event.timestamp - fight.startTime
-
-						if skillInfo.Cooldown > 0 {
-							nextCooldown = whenSeconds + skillInfo.Cooldown*1000
-
-							totalCooldown += skillInfo.Cooldown * 1000
-						}
-
-						used++
-					}
-
-					if nextCooldown > fightTime {
-						totalCooldown -= nextCooldown - fightTime
-					}
-
-					buffUsage.Usage.data = append(buffUsage.Usage.data, float64(used))
-					buffUsage.Cooldown.data = append(buffUsage.Cooldown.data, float64(totalCooldown)/float64(fightTime)*100.0)
-				}
+	for _, fight := range inst.Fights {
+		encounterData, ok := encounterMap[fight.EncounterID]
+		if !ok {
+			encounterData = &StatisticEncounter{
+				Encounter: StatisticEncounterInfo{
+					ID:   fight.EncounterID,
+					Name: inst.encounterNames[fight.EncounterID],
+				},
+				Jobs:    make([]*StatisticJob, 0, len(ffxiv.JobOrder)),
+				jobsMap: make(map[string]*StatisticJob, len(ffxiv.JobOrder)),
 			}
+			encounterMap[fight.EncounterID] = encounterData
+			r.Encounter = append(r.Encounter, encounterData)
+		}
+
+		jobData, ok := encounterData.jobsMap[fight.Job]
+		if !ok {
+			jobData = &StatisticJob{
+				Job:     fight.Job,
+				Data:    make([]*StatisticSkill, 0, 10),
+				dataMap: make(map[int]*StatisticSkill, 10),
+			}
+			encounterData.Jobs = append(encounterData.Jobs, jobData)
+			encounterData.jobsMap[fight.Job] = jobData
+		}
+		jobData.TotalKills++
+
+		for _, skillId := range ffxiv.SkillDataEachJob[fight.Job] {
+			skillInfo := ffxiv.SkillDataMap[skillId]
+
+			buffUsage, ok := jobData.dataMap[skillId]
+			if !ok {
+				buffUsage = &StatisticSkill{
+					Info: BuffSkillInfo{
+						ID:       skillInfo.ID,
+						Cooldown: skillInfo.Cooldown,
+						Name:     skillInfo.Name,
+						//Icon:     skillInfo.IconUrl,
+					},
+				}
+				jobData.Data = append(jobData.Data, buffUsage)
+				jobData.dataMap[skillId] = buffUsage
+			}
+
+			fightTime := fight.EndTime - fight.StartTime
+
+			used := 0
+			nextCooldown := 0
+			totalCooldown := 0
+
+			for _, event := range fight.Events {
+				if skillId != 0 && event.avilityID != skillId {
+					continue
+				}
+				/**
+				if skillId == 0 && (event.avilityType != 1 || event.avilityID < 10000000) {
+					continue
+				}
+				*/
+
+				if buffUsage.Info.Icon == "" {
+					buffUsage.Info.Icon = event.icon____
+				}
+
+				if skillInfo.Cooldown > 0 {
+					nextCooldown = event.timestamp + skillInfo.Cooldown*1000
+
+					totalCooldown += skillInfo.Cooldown * 1000
+				}
+
+				used++
+			}
+
+			if nextCooldown > fightTime {
+				totalCooldown -= nextCooldown - fightTime
+			}
+
+			buffUsage.Usage.data = append(buffUsage.Usage.data, float64(used))
+			buffUsage.Cooldown.data = append(buffUsage.Cooldown.data, float64(totalCooldown)/float64(fightTime)*100.0)
 		}
 	}
 

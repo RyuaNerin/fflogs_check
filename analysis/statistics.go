@@ -17,7 +17,6 @@ type StatisticEncounter struct {
 type StatisticEncounterInfo struct {
 	ID   int    `json:"id"`
 	Name string `json:"name"`
-	Zone int    `json:"zone"`
 }
 
 type StatisticJob struct {

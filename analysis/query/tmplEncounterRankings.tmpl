@@ -1,0 +1,20 @@
+{
+	worldData {
+		{{ range $encIDIndex, $encID := $.EncounterIDs }}
+		e_{{ $encID }}: encounter(id: {{ $encID }}) {
+			id
+			name
+		}
+		{{ end }}
+	}
+	characterData {
+		character(name: "{{ $.CharName }}", serverSlug:"{{ $.CharServer }}", serverRegion: "{{ $.CharRegion }}") {
+			{{ range $encIDIndex, $encID := $.EncounterIDs }}
+			e_{{ $encID }}: encounterRankings(encounterID: {{ $encID }})
+			{{ range $i, $part := $.AdditionalPartition }}
+			e{{ $i }}_{{ $encID }}: encounterRankings(encounterID: {{ $encID }}, partition: {{ $part }} )
+			{{ end }}
+			{{ end }}
+		}
+	}
+}

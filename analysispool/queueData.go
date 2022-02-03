@@ -72,10 +72,9 @@ func queueWorker() {
 
 		log.Printf("Start: %s@%s", q.opt.CharName, q.opt.CharServer)
 		q.Start()
-		resp, err := analysis.Analyze(&q.opt)
+		resp, ok := analysis.Analyze(&q.opt)
 		log.Printf("End: %s@%s", q.opt.CharName, q.opt.CharServer)
-		if err != nil {
-			log.Printf("%+v\n", errors.WithStack(err))
+		if !ok {
 			q.Error()
 		} else {
 			q.Succ(resp)

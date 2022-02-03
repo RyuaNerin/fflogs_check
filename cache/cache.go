@@ -1,7 +1,6 @@
 package cache
 
 import (
-	"ffxiv_check/share"
 	"fmt"
 	"hash/fnv"
 	"log"
@@ -46,10 +45,19 @@ func checkSkip(h uint64) bool {
 	return ok
 }
 
-func cache(path string, r interface{}, saveMode bool) bool {
+func cache(
+	r interface{},
+	saveMode bool,
+	dir string,
+	path string,
+	pathArgs ...interface{},
+) bool {
 	h := fnv.New64a()
-	h.Write(share.S2b(path))
+	fmt.Fprint(h, dir)
+	fmt.Fprintf(h, path, pathArgs...)
 	hash := h.Sum64()
+
+	fsPath := fmt.Sprintf("%s/%d.json", dir, hash)
 
 	if saveMode {
 		if !lock(hash) {
@@ -57,7 +65,7 @@ func cache(path string, r interface{}, saveMode bool) bool {
 		}
 		defer unlock(hash)
 
-		fs, err := os.Create(path)
+		fs, err := os.Create(fsPath)
 		if err != nil {
 			return false
 		}
@@ -66,7 +74,7 @@ func cache(path string, r interface{}, saveMode bool) bool {
 		err = jsoniter.NewEncoder(fs).Encode(r)
 		if err != nil {
 			fs.Close()
-			os.Remove(path)
+			os.Remove(fsPath)
 			return false
 		}
 		return true
@@ -75,7 +83,7 @@ func cache(path string, r interface{}, saveMode bool) bool {
 			return false
 		}
 
-		fs, err := os.Open(path)
+		fs, err := os.Open(fsPath)
 		if err != nil {
 			return false
 		}
@@ -90,11 +98,9 @@ func cache(path string, r interface{}, saveMode bool) bool {
 	}
 }
 
-func Report(reportId string, r interface{}, saveMode bool) bool {
-	path := fmt.Sprintf("./cached-json/report/%s.json", reportId)
-	return cache(path, r, saveMode)
+func Report(reportId string, fightIds string, r interface{}, saveMode bool) bool {
+	return cache(r, saveMode, "./cached-json/report", "%s_fid_%s", reportId, fightIds)
 }
 func CastsEvent(reportId string, fightId int, sourceId int, startTime int, endTime int, r interface{}, saveMode bool) bool {
-	path := fmt.Sprintf("./cached-json/events/%s_fid_%d_sid_%d_st_%d_et_%d.json", reportId, fightId, sourceId, startTime, endTime)
-	return cache(path, r, saveMode)
+	return cache(r, saveMode, "./cached-json/events", "%s_fid_%d_sid_%d_st_%d_et_%d", reportId, fightId, sourceId, startTime, endTime)
 }

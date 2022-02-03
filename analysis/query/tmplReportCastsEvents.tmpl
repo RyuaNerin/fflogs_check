@@ -1,0 +1,12 @@
+{
+	reportData {
+		{{ range $ }}
+		{{ .Hash }}: report(code: "{{ .ReportID }}") {
+			events(dataType: Casts, startTime: {{ .StartTime }}, endTime: {{ .EndTime }}, sourceID: {{ .SourceID }}) {
+				data
+				nextPageTimestamp
+			}
+		}
+		{{ end }}
+	}
+}
