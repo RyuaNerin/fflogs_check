@@ -30,7 +30,7 @@ func (inst *analysisInstance) updateReports() bool {
 		} `json:"data"`
 	}
 
-	err := inst.try(func() error { return inst.callGraphQl(nil, tmplEncounterRankings, inst, &resp) })
+	err := inst.try(func() error { return inst.callGraphQl(inst.ctx, tmplEncounterRankings, inst, &resp) })
 	if err != nil {
 		fmt.Printf("%+v\n", errors.WithStack(err))
 		return false
