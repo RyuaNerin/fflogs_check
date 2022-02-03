@@ -182,7 +182,7 @@ func (inst *analysisInstance) updateEvents() bool {
 				} `json:"data"`
 			}
 
-			err := inst.try(func() error { return inst.callGraphQl(nil, tmplReportCastsEvents, query, &resp) })
+			err := inst.try(func() error { return inst.callGraphQl(wpCtx, tmplReportCastsEvents, query, &resp) })
 			if err != nil {
 				wpCtxCancel()
 				wp.Stop()
