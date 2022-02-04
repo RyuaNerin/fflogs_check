@@ -10,8 +10,7 @@ import (
 
 	"ffxiv_check/cache"
 	"ffxiv_check/share"
-
-	"github.com/gammazero/workerpool"
+	"ffxiv_check/share/parallel"
 )
 
 func (inst *analysisInstance) updateEvents() bool {
@@ -164,16 +163,15 @@ func (inst *analysisInstance) updateEvents() bool {
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	wpCtx, wpCtxCancel := context.WithCancel(inst.ctx)
-	wp := workerpool.New(workers)
+	pp := parallel.New(workers)
 
-	work := func(queryOrig []*TodoFight) func() {
+	work := func(queryOrig []*TodoFight) func(ctx context.Context) error {
 		query := make([]*TodoFight, len(queryOrig))
 		copy(query, queryOrig)
 
-		return func() {
-			if wpCtx.Err() != nil {
-				return
+		return func(ctx context.Context) error {
+			if ctx.Err() != nil {
+				return nil
 			}
 
 			var resp struct {
@@ -182,22 +180,24 @@ func (inst *analysisInstance) updateEvents() bool {
 				} `json:"data"`
 			}
 
-			err := inst.try(func() error { return inst.callGraphQl(wpCtx, tmplReportCastsEvents, query, &resp) })
+			err := inst.try(func() error { return inst.callGraphQl(ctx, tmplReportCastsEvents, query, &resp) })
 			if err != nil {
-				wpCtxCancel()
-				wp.Stop()
-				return
+				return err
 			}
 
 			for hash, reportData := range resp.Data.ReportData {
 				do(hash, reportData, true)
 			}
 			progress()
+
+			return nil
 		}
 	}
 
 	query := make([]*TodoFight, 0, maxSummary)
 	for {
+		pp.Reset(inst.ctx)
+
 		qCount := 0
 		for _, todo := range todoList {
 			if !todo.done && todo.retries < 3 {
@@ -205,14 +205,14 @@ func (inst *analysisInstance) updateEvents() bool {
 				query = append(query, todo)
 
 				if len(query) == maxSummary {
-					wp.Submit(work(query))
+					pp.Add(work(query))
 					query = query[:0]
 					qCount++
 				}
 			}
 		}
 		if len(query) > 0 {
-			wp.Submit(work(query))
+			pp.Add(work(query))
 			query = query[:0]
 			qCount++
 		}
@@ -221,8 +221,7 @@ func (inst *analysisInstance) updateEvents() bool {
 			break
 		}
 
-		wp.StopWait()
-		err := wpCtx.Err()
+		err := pp.Wait()
 		if err != nil {
 			return false
 		}

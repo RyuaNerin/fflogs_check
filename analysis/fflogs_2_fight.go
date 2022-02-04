@@ -10,8 +10,7 @@ import (
 
 	"ffxiv_check/cache"
 	"ffxiv_check/share"
-
-	"github.com/gammazero/workerpool"
+	"ffxiv_check/share/parallel"
 )
 
 func (inst *analysisInstance) updateFights() bool {
@@ -152,16 +151,15 @@ func (inst *analysisInstance) updateFights() bool {
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	wpCtx, wpCtxCancel := context.WithCancel(inst.ctx)
-	wp := workerpool.New(workers)
+	pp := parallel.New(workers)
 
-	work := func(queryOrig []*TodoData) func() {
+	work := func(queryOrig []*TodoData) func(ctx context.Context) error {
 		query := make([]*TodoData, len(queryOrig))
 		copy(query, queryOrig)
 
-		return func() {
-			if wpCtx.Err() != nil {
-				return
+		return func(ctx context.Context) error {
+			if ctx.Err() != nil {
+				return nil
 			}
 
 			var resp struct {
@@ -170,22 +168,24 @@ func (inst *analysisInstance) updateFights() bool {
 				} `json:"data"`
 			}
 
-			err := inst.try(func() error { return inst.callGraphQl(wpCtx, tmplReportSummary, query, &resp) })
+			err := inst.try(func() error { return inst.callGraphQl(ctx, tmplReportSummary, query, &resp) })
 			if err != nil {
-				wpCtxCancel()
-				wp.Stop()
-				return
+				return err
 			}
 
 			for hash, reportData := range resp.Data.ReportData {
 				do(hash, reportData, true)
 			}
 			progress()
+
+			return nil
 		}
 	}
 
 	query := make([]*TodoData, 0, maxSummary)
 	for {
+		pp.Reset(inst.ctx)
+
 		qCount := 0
 		for _, todo := range todoList {
 			if todo.retries < 3 {
@@ -193,14 +193,14 @@ func (inst *analysisInstance) updateFights() bool {
 				query = append(query, todo)
 
 				if len(query) == maxSummary {
-					wp.Submit(work(query))
+					pp.Add(work(query))
 					query = query[:0]
 					qCount++
 				}
 			}
 		}
 		if len(query) > 0 {
-			wp.Submit(work(query))
+			pp.Add(work(query))
 			query = query[:0]
 			qCount++
 		}
@@ -209,8 +209,7 @@ func (inst *analysisInstance) updateFights() bool {
 			break
 		}
 
-		wp.StopWait()
-		err := wpCtx.Err()
+		err := pp.Wait()
 		if err != nil {
 			return false
 		}

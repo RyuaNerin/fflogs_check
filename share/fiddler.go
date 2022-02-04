@@ -12,12 +12,12 @@ func init() {
 		MaxConnsPerHost:       0,
 		MaxIdleConns:          0,
 		MaxIdleConnsPerHost:   64,
-		ResponseHeaderTimeout: 10 * time.Second,
-		TLSHandshakeTimeout:   10 * time.Second,
-		IdleConnTimeout:       30 * time.Second,
-		ExpectContinueTimeout: 30 * time.Second,
+		ResponseHeaderTimeout: 2 * time.Minute,
+		TLSHandshakeTimeout:   2 * time.Minute,
+		IdleConnTimeout:       2 * time.Minute,
+		ExpectContinueTimeout: 2 * time.Minute,
 	}
-	http.DefaultClient.Timeout = 1 * time.Minute
+	http.DefaultClient.Timeout = 2 * time.Minute
 	http.DefaultClient.Transport = tr
 	if conn, err := net.DialTimeout("tcp", "127.0.0.1:50000", time.Second); err == nil {
 		conn.Close()
