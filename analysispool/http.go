@@ -1,7 +1,6 @@
 package analysispool
 
 import (
-	"bytes"
 	"context"
 	"log"
 	"net/http"
@@ -29,9 +28,10 @@ func Do(ctx context.Context, ws *websocket.Conn) {
 	}
 
 	q := queueData{
-		context: ctx,
-		msg:     make(chan *bytes.Buffer),
-		done:    make(chan struct{}),
+		ws:        ws,
+		ctx:       ctx,
+		ctxCancel: ctxCancel,
+		done:      make(chan struct{}),
 	}
 
 	err = ws.ReadJSON(&q.opt)
@@ -47,9 +47,6 @@ func Do(ctx context.Context, ws *websocket.Conn) {
 			}
 		}
 	}()
-
-	q.opt.Context = ctx
-	q.opt.Progress = q.Progress
 
 	passed := false
 	switch {
@@ -68,33 +65,14 @@ func Do(ctx context.Context, ws *websocket.Conn) {
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	writeDone := make(chan struct{})
 	go func() {
-		defer func() {
-			writeDone <- struct{}{}
-		}()
-
 		ticker := time.NewTicker(5 * time.Second)
 		defer ticker.Stop()
 		for {
 			select {
-			case msg, ok := <-q.msg:
-				if !ok {
-					return
-				} else {
-					err := ws.WriteMessage(websocket.TextMessage, msg.Bytes())
-					eventRespBufferPool.Put(msg)
-					if err != nil {
-						log.Printf("%+v\n", errors.WithStack(err))
-						ctxCancel()
-						return
-					}
-				}
-
 			case <-ticker.C:
 				err := ws.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(5*time.Second))
 				if err != nil {
-					log.Printf("%+v\n", errors.WithStack(err))
 					ctxCancel()
 					return
 				}
@@ -104,9 +82,6 @@ func Do(ctx context.Context, ws *websocket.Conn) {
 			}
 		}
 	}()
-
-	q.opt.Context = ctx
-	q.opt.Progress = q.Progress
 
 	queueLock.Lock()
 	q.Reorder(len(queue))
@@ -120,11 +95,11 @@ func Do(ctx context.Context, ws *websocket.Conn) {
 	queueLock.Unlock()
 
 	<-q.done
-	close(q.msg)
-	<-writeDone
+
+	time.Sleep(time.Second)
 
 	err = ws.WriteMessage(websocket.CloseMessage, websockEmptyClosure)
-	if err != nil {
+	if err != nil && err != websocket.ErrCloseSent {
 		log.Printf("%+v\n", errors.WithStack(err))
 	}
 

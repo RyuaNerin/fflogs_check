@@ -3,12 +3,14 @@ package analysispool
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"log"
 	"strings"
 	"sync"
 
 	"ffxiv_check/analysis"
 
+	"github.com/gorilla/websocket"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 )
@@ -20,11 +22,15 @@ var (
 )
 
 type queueData struct {
-	opt     analysis.AnalyzeOptions // 설정
-	context context.Context
+	opt analysis.AnalyzeOptions // 설정
 
-	msg  chan *bytes.Buffer
+	ws        *websocket.Conn
+	ctx       context.Context
+	ctxCancel func()
+
 	done chan struct{}
+
+	msgLock sync.Mutex
 }
 
 var (
@@ -72,7 +78,11 @@ func queueWorker() {
 
 		log.Printf("Start: %s@%s", q.opt.CharName, q.opt.CharServer)
 		q.Start()
-		resp, ok := analysis.Analyze(&q.opt)
+		resp, ok := analysis.Analyze(
+			q.ctx,
+			q.Progress,
+			&q.opt,
+		)
 		log.Printf("End: %s@%s", q.opt.CharName, q.opt.CharServer)
 		if !ok {
 			q.Error()
@@ -81,6 +91,28 @@ func queueWorker() {
 		}
 		q.done <- struct{}{}
 	}
+}
+
+func (q *queueData) MessageJson(resp interface{}) error {
+	buf := eventRespBufferPool.Get().(*bytes.Buffer)
+	defer eventRespBufferPool.Put(buf)
+
+	buf.Reset()
+
+	err := jsoniter.NewEncoder(buf).Encode(&resp)
+	if err != nil {
+		fmt.Printf("%+v\n", errors.WithStack(err))
+		return err
+	}
+
+	return q.MessageBytes(buf.Bytes())
+}
+
+func (q *queueData) MessageBytes(data []byte) error {
+	q.msgLock.Lock()
+	defer q.msgLock.Unlock()
+
+	return q.ws.WriteMessage(websocket.TextMessage, data)
 }
 
 func (q *queueData) Reorder(order int) {
@@ -92,23 +124,19 @@ func (q *queueData) Reorder(order int) {
 		Data:  order,
 	}
 
-	buf := eventRespBufferPool.Get().(*bytes.Buffer)
-	buf.Reset()
-	err := jsoniter.NewEncoder(buf).Encode(&resp)
+	err := q.MessageJson(&resp)
 	if err != nil {
 		log.Printf("%+v\n", errors.WithStack(err))
-		eventRespBufferPool.Put(buf)
-		return
+		q.ctxCancel()
 	}
-
-	q.msg <- buf
 }
 
 func (q *queueData) Start() {
-	buf := eventRespBufferPool.Get().(*bytes.Buffer)
-	buf.Reset()
-	buf.Write(eventStart)
-	q.msg <- buf
+	err := q.MessageBytes(eventStart)
+	if err != nil {
+		log.Printf("%+v\n", errors.WithStack(err))
+		q.ctxCancel()
+	}
 }
 
 func (q *queueData) Progress(s string) {
@@ -120,23 +148,21 @@ func (q *queueData) Progress(s string) {
 		Data:  s,
 	}
 
-	buf := eventRespBufferPool.Get().(*bytes.Buffer)
-	buf.Reset()
-	err := jsoniter.NewEncoder(buf).Encode(&resp)
+	err := q.MessageJson(&resp)
 	if err != nil {
 		log.Printf("%+v\n", errors.WithStack(err))
-		eventRespBufferPool.Put(buf)
-		return
+		q.ctxCancel()
 	}
-
-	q.msg <- buf
 }
 
 func (q *queueData) Error() {
-	buf := eventRespBufferPool.Get().(*bytes.Buffer)
-	buf.Reset()
-	buf.Write(eventError)
-	q.msg <- buf
+	err := q.MessageBytes(eventError)
+	if err != nil {
+		if err != websocket.ErrCloseSent {
+			log.Printf("%+v\n", errors.WithStack(err))
+		}
+		q.ctxCancel()
+	}
 }
 
 func (q *queueData) Succ(r *analysis.Statistics) {
@@ -159,14 +185,9 @@ func (q *queueData) Succ(r *analysis.Statistics) {
 		Data:  sb.String(),
 	}
 
-	buf := eventRespBufferPool.Get().(*bytes.Buffer)
-	buf.Reset()
-	err = jsoniter.NewEncoder(buf).Encode(&resp)
+	err = q.MessageJson(&resp)
 	if err != nil {
 		log.Printf("%+v\n", errors.WithStack(err))
-		eventRespBufferPool.Put(buf)
-		return
+		q.ctxCancel()
 	}
-
-	q.msg <- buf
 }

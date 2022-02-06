@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/dimchansky/utfbom"
 )
@@ -54,6 +55,10 @@ func init() {
 			}
 
 		case "1":
+			if strings.HasPrefix(d[1], "#") {
+				continue
+			}
+
 			id, err := strconv.Atoi(d[2])
 			if err != nil {
 				panic(err)

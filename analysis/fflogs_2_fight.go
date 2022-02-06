@@ -39,9 +39,18 @@ func (inst *analysisInstance) updateFights() bool {
 			}
 		}
 
-		h := fnv.New64()
-		h.Write(share.S2b(report.ReportID))
-		h.Write(sb.Bytes())
+		h := fnv.New64a()
+
+		var hash string
+		for {
+			h.Write(share.S2b(report.ReportID))
+			h.Write(sb.Bytes())
+
+			hash = "h" + hex.EncodeToString(h.Sum(nil))
+			if _, ok := todoMap[hash]; !ok {
+				break
+			}
+		}
 
 		td := &TodoData{
 			Hash:     "h" + hex.EncodeToString(h.Sum(nil)),
@@ -75,6 +84,7 @@ func (inst *analysisInstance) updateFights() bool {
 		if !ok {
 			return
 		}
+		td.retries = 0
 
 		if !td.done {
 			td.done = true
@@ -188,7 +198,7 @@ func (inst *analysisInstance) updateFights() bool {
 
 		qCount := 0
 		for _, todo := range todoList {
-			if todo.retries < 3 {
+			if todo.retries < 3 && !todo.done {
 				todo.retries++
 				query = append(query, todo)
 

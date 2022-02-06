@@ -2,10 +2,26 @@
 	reportData {
 		{{ range $ }}
 		{{ .Hash }}: report(code: "{{ .ReportID }}") {
-			events(dataType: Casts, startTime: {{ .StartTime }}, endTime: {{ .EndTime }}, sourceID: {{ .SourceID }}) {
+			{{ if not .Casts.Done }}
+			casts: events(dataType: Casts, startTime: {{ .Casts.StartTime }}, endTime: {{ .Casts.EndTime }}, sourceID: {{ .SourceID }}) {
 				data
 				nextPageTimestamp
 			}
+			{{ end }}
+			
+			{{ if not .Buffs.Done }}
+			buffs: events(dataType: Buffs, startTime: {{ .Buffs.StartTime }}, endTime: {{ .Buffs.EndTime }}, sourceID: {{ .SourceID }}, abilityID: 1000049) {
+				data
+				nextPageTimestamp
+			}
+			{{ end }}
+			
+			{{ if not .Deaths.Done }}
+			deaths: events(dataType: Deaths, startTime: {{ .Deaths.StartTime }}, endTime: {{ .Deaths.EndTime }}, sourceID: {{ .SourceID }}) {
+				data
+				nextPageTimestamp
+			}
+			{{ end }}
 		}
 		{{ end }}
 	}

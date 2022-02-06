@@ -18,10 +18,10 @@ import (
 
 const (
 	maxRetries = 3
-	workers    = 8
+	workers    = 4
 
 	maxSummary = 50
-	maxEvents  = 50
+	maxEvents  = 25
 )
 
 type fightKey struct {
@@ -51,7 +51,6 @@ type analysisReport struct {
 
 	Fights []*analysisFight
 }
-
 type analysisFight struct {
 	ReportID  string
 	FightID   int
@@ -63,14 +62,21 @@ type analysisFight struct {
 
 	SourceID int
 
-	Events []analysisEvent
+	Casts  []analysisEvent
+	Buffs  []analysisBuff
+	Deaths []analysisDeath
 }
-
 type analysisEvent struct {
-	avilityID int
 	timestamp int
-
-	icon____ string
+	gameID    int
+}
+type analysisBuff struct {
+	timestamp int
+	gameID    int
+	removed   bool
+}
+type analysisDeath struct {
+	timestamp int
 }
 
 var (
@@ -137,7 +143,7 @@ func (inst *analysisInstance) callGraphQl(ctx context.Context, tmpl *template.Te
 	buf.Reset()
 	err = jsoniter.NewEncoder(buf).Encode(&queryData)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	if ctx == nil {
@@ -151,19 +157,19 @@ func (inst *analysisInstance) callGraphQl(ctx context.Context, tmpl *template.Te
 		buf,
 	)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	req.Header.Set("Content-Type", "application/json; encoding=utf-8")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	defer resp.Body.Close()
 
 	err = jsoniter.NewDecoder(resp.Body).Decode(&respData)
 	if err != io.EOF && err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	return nil

@@ -11,9 +11,17 @@ import (
 	"ffxiv_check/cache"
 	"ffxiv_check/share"
 	"ffxiv_check/share/parallel"
+
+	"github.com/pkg/errors"
 )
 
 func (inst *analysisInstance) updateEvents() bool {
+	type TodoFightEvent struct {
+		Done      bool
+		StartTime int
+		EndTime   int
+	}
+
 	type TodoFight struct {
 		Hash string
 
@@ -21,29 +29,50 @@ func (inst *analysisInstance) updateEvents() bool {
 		FightID  int
 		SourceID int
 
-		StartTime int
-		EndTime   int
+		Casts  TodoFightEvent
+		Buffs  TodoFightEvent
+		Deaths TodoFightEvent
+
+		done    bool
+		retries int
 
 		fightStartTime int
-		retries        int
-		done           bool
 	}
 
 	todoList := make([]*TodoFight, 0, len(inst.Reports))
 	todoMap := make(map[string]*TodoFight, len(inst.Reports))
 	for _, report := range inst.Reports {
 		for _, fight := range report.Fights {
-			h := fnv.New64()
-			h.Write(share.S2b(report.ReportID))
-			fmt.Fprint(h, fight.FightID)
+			h := fnv.New64a()
+
+			var hash string
+			for {
+				h.Write(share.S2b(report.ReportID))
+				fmt.Fprint(h, fight.FightID)
+
+				hash = "h" + hex.EncodeToString(h.Sum(nil))
+				if _, ok := todoMap[hash]; !ok {
+					break
+				}
+			}
 
 			td := &TodoFight{
-				Hash:           "h" + hex.EncodeToString(h.Sum(nil)),
-				ReportID:       report.ReportID,
-				FightID:        fight.FightID,
-				SourceID:       fight.SourceID,
-				StartTime:      fight.StartTime,
-				EndTime:        fight.EndTime,
+				Hash:     hash,
+				ReportID: report.ReportID,
+				FightID:  fight.FightID,
+				SourceID: fight.SourceID,
+				Casts: TodoFightEvent{
+					StartTime: fight.StartTime,
+					EndTime:   fight.EndTime,
+				},
+				Buffs: TodoFightEvent{
+					StartTime: fight.StartTime,
+					EndTime:   fight.EndTime,
+				},
+				Deaths: TodoFightEvent{
+					StartTime: fight.StartTime,
+					EndTime:   fight.EndTime,
+				},
 				fightStartTime: fight.StartTime,
 			}
 			todoList = append(todoList, td)
@@ -53,13 +82,19 @@ func (inst *analysisInstance) updateEvents() bool {
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	type RespReportData struct {
+	type respReportEventData struct {
 		Data []struct {
 			Timestamp     int    `json:"timestamp"`
 			Type          string `json:"type"`
 			AbilityGameID int    `json:"abilityGameID"`
 		}
 		NextPageTimestamp *int `json:"nextPageTimestamp"`
+	}
+
+	type RespReportData struct {
+		Casts  *respReportEventData `json:"casts"`
+		Buffs  *respReportEventData `json:"buffs"`
+		Deaths *respReportEventData `json:"deaths"`
 	}
 
 	var worked int32
@@ -69,8 +104,13 @@ func (inst *analysisInstance) updateEvents() bool {
 			return
 		}
 
+		td.retries = 0
+
 		if reportData == nil {
 			td.done = true
+			td.Casts.Done = true
+			td.Buffs.Done = true
+			td.Deaths.Done = true
 			atomic.AddInt32(&worked, 1)
 			return
 		}
@@ -80,20 +120,12 @@ func (inst *analysisInstance) updateEvents() bool {
 				td.ReportID,
 				td.FightID,
 				td.SourceID,
-				td.StartTime,
-				td.EndTime,
+				td.Casts.StartTime, td.Casts.EndTime,
+				td.Buffs.StartTime, td.Buffs.EndTime,
+				td.Deaths.StartTime, td.Deaths.EndTime,
 				reportData,
 				true,
 			)
-		}
-
-		if reportData.NextPageTimestamp == nil {
-			if !td.done {
-				td.done = true
-				atomic.AddInt32(&worked, 1)
-			}
-		} else {
-			td.StartTime = *reportData.NextPageTimestamp
 		}
 
 		fightKey := fightKey{
@@ -105,25 +137,104 @@ func (inst *analysisInstance) updateEvents() bool {
 			return
 		}
 
-		l := len(fightInfo.Events)
-		if cap(fightInfo.Events) < l+len(reportData.Data) {
-			newArr := make([]analysisEvent, l, l+len(reportData.Data))
-			copy(newArr, fightInfo.Events)
-			fightInfo.Events = newArr
-		}
-
-		for _, event := range reportData.Data {
-			if event.Type == "cast" {
-				continue
+		if reportData.Casts != nil {
+			if reportData.Casts.NextPageTimestamp == nil {
+				td.Casts.Done = true
+			} else {
+				td.Casts.StartTime = *reportData.Casts.NextPageTimestamp
 			}
 
-			fightInfo.Events = append(
-				fightInfo.Events,
-				analysisEvent{
-					avilityID: event.AbilityGameID,
-					timestamp: event.Timestamp - td.fightStartTime,
-				},
-			)
+			l := len(fightInfo.Casts)
+			if cap(fightInfo.Casts) < l+len(reportData.Casts.Data) {
+				newArr := make([]analysisEvent, l, l+len(reportData.Casts.Data))
+				copy(newArr, fightInfo.Casts)
+				fightInfo.Casts = newArr
+			}
+
+			for _, event := range reportData.Casts.Data {
+				switch event.Type {
+				case "cast":
+					fightInfo.Casts = append(
+						fightInfo.Casts,
+						analysisEvent{
+							gameID:    event.AbilityGameID,
+							timestamp: event.Timestamp - td.fightStartTime,
+						},
+					)
+				}
+			}
+		}
+
+		if reportData.Buffs != nil {
+			if reportData.Buffs.NextPageTimestamp == nil {
+				td.Buffs.Done = true
+			} else {
+				td.Buffs.StartTime = *reportData.Buffs.NextPageTimestamp
+			}
+
+			l := len(fightInfo.Buffs)
+			if cap(fightInfo.Buffs) < l+len(reportData.Buffs.Data) {
+				newArr := make([]analysisBuff, l, l+len(reportData.Buffs.Data))
+				copy(newArr, fightInfo.Buffs)
+				fightInfo.Buffs = newArr
+			}
+
+			for _, event := range reportData.Buffs.Data {
+				switch event.Type {
+				case "applybuff":
+					fightInfo.Buffs = append(
+						fightInfo.Buffs,
+						analysisBuff{
+							timestamp: event.Timestamp - td.fightStartTime,
+							gameID:    event.AbilityGameID,
+							removed:   false,
+						},
+					)
+				case "removebuff":
+					fightInfo.Buffs = append(
+						fightInfo.Buffs,
+						analysisBuff{
+							timestamp: event.Timestamp - td.fightStartTime,
+							gameID:    event.AbilityGameID,
+							removed:   true,
+						},
+					)
+				}
+			}
+		}
+
+		if reportData.Deaths != nil {
+			if reportData.Deaths.NextPageTimestamp == nil {
+				td.Deaths.Done = true
+			} else {
+				td.Deaths.StartTime = *reportData.Deaths.NextPageTimestamp
+			}
+
+			l := len(fightInfo.Deaths)
+			if cap(fightInfo.Deaths) < l+len(reportData.Deaths.Data) {
+				newArr := make([]analysisDeath, l, l+len(reportData.Deaths.Data))
+				copy(newArr, fightInfo.Deaths)
+				fightInfo.Deaths = newArr
+			}
+
+			for _, event := range reportData.Deaths.Data {
+				switch event.Type {
+				case "death":
+					fightInfo.Deaths = append(
+						fightInfo.Deaths,
+						analysisDeath{
+							timestamp: event.Timestamp - td.fightStartTime,
+						},
+					)
+				}
+			}
+		}
+
+		if !td.done {
+			if td.Casts.Done && td.Buffs.Done && td.Deaths.Done {
+				td.done = true
+				atomic.AddInt32(&worked, 1)
+			}
 		}
 	}
 
@@ -143,8 +254,9 @@ func (inst *analysisInstance) updateEvents() bool {
 				todo.ReportID,
 				todo.FightID,
 				todo.SourceID,
-				todo.StartTime,
-				todo.EndTime,
+				todo.Casts.StartTime, todo.Casts.EndTime,
+				todo.Buffs.StartTime, todo.Buffs.EndTime,
+				todo.Deaths.StartTime, todo.Deaths.EndTime,
 				&respCache,
 				false,
 			)
@@ -153,10 +265,9 @@ func (inst *analysisInstance) updateEvents() bool {
 			}
 			do(todo.Hash, &respCache, false)
 
-			if respCache.NextPageTimestamp == nil {
+			if todo.done {
 				break
 			}
-			todo.StartTime = *respCache.NextPageTimestamp
 		}
 	}
 	progress()
@@ -182,6 +293,7 @@ func (inst *analysisInstance) updateEvents() bool {
 
 			err := inst.try(func() error { return inst.callGraphQl(ctx, tmplReportCastsEvents, query, &resp) })
 			if err != nil {
+				fmt.Printf("%+v\n", errors.WithStack(err))
 				return err
 			}
 
@@ -194,17 +306,17 @@ func (inst *analysisInstance) updateEvents() bool {
 		}
 	}
 
-	query := make([]*TodoFight, 0, maxSummary)
+	query := make([]*TodoFight, 0, maxEvents)
 	for {
 		pp.Reset(inst.ctx)
 
 		qCount := 0
 		for _, todo := range todoList {
-			if !todo.done && todo.retries < 3 {
+			if todo.retries < 3 && !todo.done {
 				todo.retries++
 				query = append(query, todo)
 
-				if len(query) == maxSummary {
+				if len(query) == maxEvents {
 					pp.Add(work(query))
 					query = query[:0]
 					qCount++
@@ -236,9 +348,21 @@ func (inst *analysisInstance) updateEvents() bool {
 
 	for _, fight := range inst.Fights {
 		sort.Slice(
-			fight.Events,
+			fight.Casts,
 			func(i, k int) bool {
-				return fight.Events[i].timestamp < fight.Events[k].timestamp
+				return fight.Casts[i].timestamp < fight.Casts[k].timestamp
+			},
+		)
+		sort.Slice(
+			fight.Buffs,
+			func(i, k int) bool {
+				return fight.Buffs[i].timestamp < fight.Buffs[k].timestamp
+			},
+		)
+		sort.Slice(
+			fight.Deaths,
+			func(i, k int) bool {
+				return fight.Deaths[i].timestamp < fight.Deaths[k].timestamp
 			},
 		)
 	}

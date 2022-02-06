@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"compress/gzip"
 	"fmt"
 	"hash/fnv"
 	"log"
@@ -57,7 +58,7 @@ func cache(
 	fmt.Fprintf(h, path, pathArgs...)
 	hash := h.Sum64()
 
-	fsPath := fmt.Sprintf("%s/%d.json", dir, hash)
+	fsPath := fmt.Sprintf("%s/%016x.json.gz", dir, hash)
 
 	if saveMode {
 		if !lock(hash) {
@@ -71,8 +72,12 @@ func cache(
 		}
 		defer fs.Close()
 
-		err = jsoniter.NewEncoder(fs).Encode(r)
+		gz := gzip.NewWriter(fs)
+		defer gz.Flush()
+
+		err = jsoniter.NewEncoder(gz).Encode(r)
 		if err != nil {
+			gz.Close()
 			fs.Close()
 			os.Remove(fsPath)
 			return false
@@ -89,7 +94,13 @@ func cache(
 		}
 		defer fs.Close()
 
-		err = jsoniter.NewDecoder(fs).Decode(r)
+		gz, err := gzip.NewReader(fs)
+		if err != nil {
+			log.Printf("%+v\n", errors.WithStack(err))
+			return false
+		}
+
+		err = jsoniter.NewDecoder(gz).Decode(r)
 		if err != nil {
 			log.Printf("%+v\n", errors.WithStack(err))
 			return false
@@ -99,8 +110,31 @@ func cache(
 }
 
 func Report(reportId string, fightIds string, r interface{}, saveMode bool) bool {
-	return cache(r, saveMode, "./cached-json/report", "%s_fid_%s", reportId, fightIds)
+	return cache(
+		r, saveMode,
+		"./cached-json/report",
+		"%s_fid_%s",
+		reportId, fightIds,
+	)
 }
-func CastsEvent(reportId string, fightId int, sourceId int, startTime int, endTime int, r interface{}, saveMode bool) bool {
-	return cache(r, saveMode, "./cached-json/events", "%s_fid_%d_sid_%d_st_%d_et_%d", reportId, fightId, sourceId, startTime, endTime)
+func CastsEvent(
+	reportId string,
+	fightId int,
+	sourceId int,
+	eventsStartTime int, eventsEndTime int,
+	buffsStartTime int, buffsEndTime int,
+	deathsStartTime int, deathsEndTime int,
+	r interface{},
+	saveMode bool,
+) bool {
+	return cache(
+		r,
+		saveMode,
+		"./cached-json/events",
+		"%s_fid_%d_sid_%d___est_%d_eet_%d___bst_%d_bet_%d___dst_%d_det_%d",
+		reportId, fightId, sourceId,
+		eventsStartTime, eventsEndTime,
+		buffsStartTime, buffsEndTime,
+		deathsStartTime, deathsEndTime,
+	)
 }
