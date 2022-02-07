@@ -93,10 +93,6 @@ func (inst *analysisInstance) buildReport() (r *Statistics) {
 					totalCooldown += skillInfo.Cooldown * 1000
 				}
 
-				if used > 2 {
-					log.Println("ffffffffffffff")
-				}
-
 			default:
 				for _, event := range fight.Casts {
 					if skillId != 0 && event.gameID != skillId {
@@ -175,7 +171,7 @@ func (inst *analysisInstance) buildReport() (r *Statistics) {
 		sort.Slice(
 			encData.Jobs,
 			func(i, k int) bool {
-				return ffxiv.JobOrder[encData.Jobs[i].Job] > ffxiv.JobOrder[encData.Jobs[k].Job]
+				return ffxiv.JobOrder[encData.Jobs[i].Job] < ffxiv.JobOrder[encData.Jobs[k].Job]
 				//return encData.Jobs[i].TotalKills > encData.Jobs[k].TotalKills
 			},
 		)
