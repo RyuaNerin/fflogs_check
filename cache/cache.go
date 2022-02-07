@@ -82,6 +82,15 @@ func cache(
 			os.Remove(fsPath)
 			return false
 		}
+
+		err = gz.Flush()
+		if err != nil {
+			gz.Close()
+			fs.Close()
+			os.Remove(fsPath)
+			return false
+		}
+
 		return true
 	} else {
 		if checkSkip(hash) {

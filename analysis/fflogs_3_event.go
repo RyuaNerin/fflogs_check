@@ -317,14 +317,14 @@ func (inst *analysisInstance) updateEvents() bool {
 				query = append(query, todo)
 
 				if len(query) == maxEvents {
-					pp.Add(work(query))
+					pp.Do(work(query))
 					query = query[:0]
 					qCount++
 				}
 			}
 		}
 		if len(query) > 0 {
-			pp.Add(work(query))
+			pp.Do(work(query))
 			query = query[:0]
 			qCount++
 		}

@@ -15,8 +15,7 @@ import (
 
 func (inst *analysisInstance) updateFights() bool {
 	type TodoData struct {
-		Hash string
-
+		Hash     string
 		ReportID string
 		FightIDs string
 
@@ -203,14 +202,14 @@ func (inst *analysisInstance) updateFights() bool {
 				query = append(query, todo)
 
 				if len(query) == maxSummary {
-					pp.Add(work(query))
+					pp.Do(work(query))
 					query = query[:0]
 					qCount++
 				}
 			}
 		}
 		if len(query) > 0 {
-			pp.Add(work(query))
+			pp.Do(work(query))
 			query = query[:0]
 			qCount++
 		}

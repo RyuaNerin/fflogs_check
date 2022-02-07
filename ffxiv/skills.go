@@ -12,10 +12,11 @@ import (
 )
 
 type SkillData struct {
-	ID       int
-	Name     string
-	Cooldown int
-	IconUrl  string
+	ID         int
+	Name       string
+	Cooldown   int
+	IconUrl    string
+	OrderIndex int
 }
 
 var (
@@ -33,6 +34,8 @@ func init() {
 	sr, _ := utfbom.Skip(fs)
 
 	var columnJob []string
+
+	orderIndex := 0
 
 	cr := csv.NewReader(sr)
 	for {
@@ -67,11 +70,13 @@ func init() {
 			cooldown, _ := strconv.Atoi(d[3])
 
 			SkillDataMap[id] = SkillData{
-				Name:     d[1],
-				ID:       id,
-				Cooldown: cooldown,
-				IconUrl:  d[4],
+				Name:       d[1],
+				ID:         id,
+				Cooldown:   cooldown,
+				IconUrl:    d[4],
+				OrderIndex: orderIndex,
 			}
+			orderIndex++
 
 			for i := 5; i < len(d); i++ {
 				if d[i] != "" {

@@ -1,6 +1,7 @@
 package analysis
 
 import (
+	"log"
 	"sort"
 
 	"ffxiv_check/ffxiv"
@@ -81,18 +82,21 @@ func (inst *analysisInstance) buildReport() (r *Statistics) {
 			case skillIdPotion:
 				for _, event := range fight.Buffs {
 					if event.removed {
-						if event.timestamp < nextCooldown {
-							// 적용 후 꺼진 버프
-							continue
-						} else {
-							// 버프 적용이 누락된 경우...
-							event.timestamp = event.timestamp - potionBuffTime
-						}
+						event.timestamp = event.timestamp - potionBuffTime
+					}
+					if event.timestamp < nextCooldown {
+						// 적용 후 꺼진 버프
+						// 탕약 버프가 두번 뜨는 경우가 있음
+						continue
 					}
 
 					used++
 					nextCooldown = event.timestamp + skillInfo.Cooldown*1000
 					totalCooldown += skillInfo.Cooldown * 1000
+				}
+
+				if used > 2 {
+					log.Println("?????????????")
 				}
 
 			default:
@@ -181,7 +185,7 @@ func (inst *analysisInstance) buildReport() (r *Statistics) {
 			sort.Slice(
 				job.Data,
 				func(i, k int) bool {
-					return job.Data[i].Info.ID > job.Data[k].Info.ID
+					return ffxiv.SkillDataMap[job.Data[i].Info.ID].OrderIndex < ffxiv.SkillDataMap[job.Data[k].Info.ID].OrderIndex
 				},
 			)
 		}

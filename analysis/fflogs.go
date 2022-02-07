@@ -115,10 +115,13 @@ func (inst *analysisInstance) try(f func() error) (err error) {
 }
 
 func (inst *analysisInstance) progress(format string, args ...interface{}) {
+	inst.progressString <- fmt.Sprintf(format, args...)
+	/**
 	select {
 	case inst.progressString <- fmt.Sprintf(format, args...):
 	default:
 	}
+	*/
 }
 
 func (inst *analysisInstance) callGraphQl(ctx context.Context, tmpl *template.Template, tmplData interface{}, respData interface{}) error {

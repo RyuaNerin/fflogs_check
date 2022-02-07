@@ -76,5 +76,5 @@ func (inst *analysisInstance) updateReports() bool {
 		}
 	}
 
-	return true
+	return len(inst.Fights) > 0
 }
