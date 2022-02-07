@@ -7,8 +7,24 @@
     margin-left: 2px;
 }
 
-.job {
+.icon32 {
+    width: 32px;
+    height: 32px;
+    --size: 32;
+    float: left;
+    margin-right: 6px;
+    margin-left: 2px;
+}
+
+.job20 {
     content:url("img/classjobs2_sprite_20.png");
+
+    -o-object-fit: none;
+    object-fit: none;
+}
+
+.job32 {
+    content:url("img/classjobs2_sprite_32.png");
 
     -o-object-fit: none;
     object-fit: none;

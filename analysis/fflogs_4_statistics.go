@@ -1,7 +1,6 @@
 package analysis
 
 import (
-	"log"
 	"sort"
 
 	"ffxiv_check/ffxiv"
@@ -62,7 +61,7 @@ func (inst *analysisInstance) buildReport() (r *Statistics) {
 						ID:       skillInfo.ID,
 						Cooldown: skillInfo.Cooldown,
 						Name:     skillInfo.Name,
-						//Icon:     skillInfo.IconUrl,
+						Icon:     skillInfo.IconUrl,
 					},
 				}
 				jobData.Data = append(jobData.Data, buffUsage)
@@ -93,10 +92,6 @@ func (inst *analysisInstance) buildReport() (r *Statistics) {
 					used++
 					nextCooldown = event.timestamp + skillInfo.Cooldown*1000
 					totalCooldown += skillInfo.Cooldown * 1000
-				}
-
-				if used > 2 {
-					log.Println("?????????????")
 				}
 
 			default:
