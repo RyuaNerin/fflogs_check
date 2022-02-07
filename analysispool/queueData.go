@@ -3,16 +3,15 @@ package analysispool
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"log"
 	"strings"
 	"sync"
 
 	"ffxiv_check/analysis"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/gorilla/websocket"
 	jsoniter "github.com/json-iterator/go"
-	"github.com/pkg/errors"
 )
 
 var (
@@ -101,7 +100,7 @@ func (q *queueData) MessageJson(resp interface{}) error {
 
 	err := jsoniter.NewEncoder(buf).Encode(&resp)
 	if err != nil {
-		fmt.Printf("%+v\n", errors.WithStack(err))
+		sentry.CaptureException(err)
 		return err
 	}
 
@@ -126,7 +125,7 @@ func (q *queueData) Reorder(order int) {
 
 	err := q.MessageJson(&resp)
 	if err != nil {
-		log.Printf("%+v\n", errors.WithStack(err))
+		sentry.CaptureException(err)
 		q.ctxCancel()
 	}
 }
@@ -134,7 +133,7 @@ func (q *queueData) Reorder(order int) {
 func (q *queueData) Start() {
 	err := q.MessageBytes(eventStart)
 	if err != nil {
-		log.Printf("%+v\n", errors.WithStack(err))
+		sentry.CaptureException(err)
 		q.ctxCancel()
 	}
 }
@@ -150,7 +149,7 @@ func (q *queueData) Progress(s string) {
 
 	err := q.MessageJson(&resp)
 	if err != nil {
-		log.Printf("%+v\n", errors.WithStack(err))
+		sentry.CaptureException(err)
 		q.ctxCancel()
 	}
 }
@@ -159,7 +158,7 @@ func (q *queueData) Error() {
 	err := q.MessageBytes(eventError)
 	if err != nil {
 		if err != websocket.ErrCloseSent {
-			log.Printf("%+v\n", errors.WithStack(err))
+			sentry.CaptureException(err)
 		}
 		q.ctxCancel()
 	}
@@ -171,7 +170,7 @@ func (q *queueData) Succ(r *analysis.Statistics) {
 
 	err := tmplAnalysis.Execute(sb, r)
 	if err != nil {
-		log.Printf("%+v\n", errors.WithStack(err))
+		sentry.CaptureException(err)
 
 		q.Error()
 		return
@@ -187,7 +186,7 @@ func (q *queueData) Succ(r *analysis.Statistics) {
 
 	err = q.MessageJson(&resp)
 	if err != nil {
-		log.Printf("%+v\n", errors.WithStack(err))
+		sentry.CaptureException(err)
 		q.ctxCancel()
 	}
 }

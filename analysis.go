@@ -2,16 +2,15 @@ package main
 
 import (
 	"ffxiv_check/analysispool"
-	"fmt"
 	"net/http"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/dpapathanasiou/go-recaptcha"
+	"github.com/getsentry/sentry-go"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/pkg/errors"
 )
 
 var (
@@ -27,7 +26,9 @@ func init() {
 func routeRequest(c *gin.Context) {
 	ws, err := websocketUpgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
-		panic(err)
+		sentry.CaptureException(err)
+		c.Status(http.StatusBadRequest)
+		return
 	}
 	defer ws.Close()
 
@@ -36,7 +37,7 @@ func routeRequest(c *gin.Context) {
 	ws.SetReadDeadline(time.Now().Add(10 * time.Second))
 	_, msg, err := ws.ReadMessage()
 	if err != nil {
-		fmt.Printf("%+v\n", errors.WithStack(err))
+		sentry.CaptureException(err)
 		return
 	}
 
@@ -58,6 +59,7 @@ func routeRequest(c *gin.Context) {
 
 	ok, err := recaptcha.Confirm(remoteAddr, string(msg))
 	if err != nil || !ok {
+		sentry.CaptureException(err)
 		return
 	}
 

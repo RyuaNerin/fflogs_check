@@ -1,12 +1,11 @@
 package analysis
 
 import (
-	"fmt"
 	"log"
 	"sort"
 	"strconv"
 
-	"github.com/pkg/errors"
+	"github.com/getsentry/sentry-go"
 )
 
 func (inst *analysisInstance) updateReports() bool {
@@ -35,7 +34,7 @@ func (inst *analysisInstance) updateReports() bool {
 
 	err := inst.try(func() error { return inst.callGraphQl(inst.ctx, tmplEncounterRankings, inst, &resp) })
 	if err != nil {
-		fmt.Printf("%+v\n", errors.WithStack(err))
+		sentry.CaptureException(err)
 		return false
 	}
 

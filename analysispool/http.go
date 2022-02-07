@@ -2,12 +2,12 @@ package analysispool
 
 import (
 	"context"
-	"log"
+	"io"
 	"net/http"
 	"time"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/gorilla/websocket"
-	"github.com/pkg/errors"
 )
 
 var (
@@ -23,7 +23,7 @@ func Do(ctx context.Context, ws *websocket.Conn) {
 
 	err := ws.WriteMessage(websocket.TextMessage, eventReady)
 	if err != nil {
-		log.Printf("%+v\n", errors.WithStack(err))
+		sentry.CaptureException(err)
 		return
 	}
 
@@ -36,13 +36,20 @@ func Do(ctx context.Context, ws *websocket.Conn) {
 
 	err = ws.ReadJSON(&q.opt)
 	if err != nil {
-		log.Printf("%+v\n", errors.WithStack(err))
+		sentry.CaptureException(err)
 		return
 	}
 	go func() {
 		for {
-			_, _, err := ws.ReadMessage()
+			_, r, err := ws.NextReader()
 			if err != nil {
+				sentry.CaptureException(err)
+				return
+			}
+
+			_, err = io.Copy(io.Discard, r)
+			if err != nil && err != io.EOF {
+				sentry.CaptureException(err)
 				return
 			}
 		}
@@ -73,6 +80,7 @@ func Do(ctx context.Context, ws *websocket.Conn) {
 			case <-ticker.C:
 				err := ws.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(5*time.Second))
 				if err != nil {
+					sentry.CaptureException(err)
 					ctxCancel()
 					return
 				}
@@ -100,7 +108,7 @@ func Do(ctx context.Context, ws *websocket.Conn) {
 
 	err = ws.WriteMessage(websocket.CloseMessage, websockEmptyClosure)
 	if err != nil && err != websocket.ErrCloseSent {
-		log.Printf("%+v\n", errors.WithStack(err))
+		sentry.CaptureException(err)
 	}
 
 	ws.Close()

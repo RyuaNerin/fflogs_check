@@ -12,8 +12,10 @@ import (
 	"text/template"
 	"time"
 
+	"ffxiv_check/ffxiv"
+
+	"github.com/getsentry/sentry-go"
 	jsoniter "github.com/json-iterator/go"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -45,6 +47,8 @@ type analysisInstance struct {
 	encounterNames map[int]string
 
 	progressString chan string
+
+	skillSets ffxiv.SkillSets
 }
 type analysisReport struct {
 	ReportID string
@@ -57,7 +61,8 @@ type analysisFight struct {
 	StartTime int
 	EndTime   int
 
-	Found bool
+	DoneSummary bool
+	DoneEvents  bool
 
 	EncounterID int
 	Job         string
@@ -109,6 +114,9 @@ func (inst *analysisInstance) try(f func() error) (err error) {
 		if err == nil {
 			break
 		}
+		if err == context.Canceled || err == context.DeadlineExceeded {
+			return err
+		}
 		if i+1 < maxRetries {
 			time.Sleep(3 * time.Second)
 		}
@@ -118,12 +126,6 @@ func (inst *analysisInstance) try(f func() error) (err error) {
 
 func (inst *analysisInstance) progress(format string, args ...interface{}) {
 	inst.progressString <- fmt.Sprintf(format, args...)
-	/**
-	select {
-	case inst.progressString <- fmt.Sprintf(format, args...):
-	default:
-	}
-	*/
 }
 
 func (inst *analysisInstance) callGraphQl(ctx context.Context, tmpl *template.Template, tmplData interface{}, respData interface{}) error {
@@ -133,7 +135,8 @@ func (inst *analysisInstance) callGraphQl(ctx context.Context, tmpl *template.Te
 	sb.Reset()
 	err := tmpl.Execute(sb, tmplData)
 	if err != nil {
-		return errors.WithStack(err)
+		sentry.CaptureException(err)
+		return err
 	}
 
 	queryData := struct {
@@ -148,27 +151,29 @@ func (inst *analysisInstance) callGraphQl(ctx context.Context, tmpl *template.Te
 	buf.Reset()
 	err = jsoniter.NewEncoder(buf).Encode(&queryData)
 	if err != nil {
-		return errors.WithStack(err)
+		sentry.CaptureException(err)
+		return err
 	}
 
 	if ctx == nil {
 		ctx = inst.ctx
 	}
 
-	req, err := client.NewRequest(
+	req, ok := client.NewRequest(
 		ctx,
 		"POST",
 		"https://ko.fflogs.com/api/v2/client",
 		buf,
 	)
-	if err != nil {
-		return errors.WithStack(err)
+	if !ok {
+		return err
 	}
 
 	req.Header.Set("Content-Type", "application/json; encoding=utf-8")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return errors.WithStack(err)
+		sentry.CaptureException(err)
+		return err
 	}
 	defer resp.Body.Close()
 
@@ -178,7 +183,8 @@ func (inst *analysisInstance) callGraphQl(ctx context.Context, tmpl *template.Te
 
 	err = jsoniter.NewDecoder(resp.Body).Decode(&respData)
 	if err != io.EOF && err != nil {
-		return errors.WithStack(err)
+		sentry.CaptureException(err)
+		return err
 	}
 
 	return nil

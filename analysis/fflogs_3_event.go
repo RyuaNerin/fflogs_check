@@ -13,6 +13,7 @@ import (
 	"ffxiv_check/share"
 	"ffxiv_check/share/parallel"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/pkg/errors"
 )
 
@@ -45,6 +46,10 @@ func (inst *analysisInstance) updateEvents() bool {
 	todoMap := make(map[string]*TodoFight, len(inst.Reports))
 	for _, report := range inst.Reports {
 		for _, fight := range report.Fights {
+			if !fight.DoneSummary {
+				continue
+			}
+
 			h := fnv.New64a()
 
 			var hash string
@@ -56,6 +61,10 @@ func (inst *analysisInstance) updateEvents() bool {
 				if _, ok := todoMap[hash]; !ok {
 					break
 				}
+			}
+
+			if fight.StartTime == 0 {
+				log.Println("fffffffffffff")
 			}
 
 			td := &TodoFight{
@@ -89,6 +98,7 @@ func (inst *analysisInstance) updateEvents() bool {
 			Timestamp     int    `json:"timestamp"`
 			Type          string `json:"type"`
 			AbilityGameID int    `json:"abilityGameID"`
+			TargetID      int    `json:"targetID"`
 		}
 		NextPageTimestamp *int `json:"nextPageTimestamp"`
 	}
@@ -182,6 +192,10 @@ func (inst *analysisInstance) updateEvents() bool {
 			}
 
 			for _, event := range resp.Buffs.Data {
+				if event.TargetID != fightInfo.SourceID {
+					continue
+				}
+
 				switch event.Type {
 				case "applybuff":
 					fightInfo.Buffs = append(
@@ -236,16 +250,19 @@ func (inst *analysisInstance) updateEvents() bool {
 		if !td.done {
 			if td.Casts.Done && td.Buffs.Done && td.Deaths.Done {
 				td.done = true
+				fightInfo.DoneEvents = true
 				atomic.AddInt32(&worked, 1)
 			}
 		}
 	}
 
+	progressPercent := func() float32 {
+		return float32(atomic.LoadInt32(&worked)) / float32(len(todoList)) * 100
+	}
 	progress := func() {
-		inst.progress(
-			"[3 / 3] 전투 정보 분석 중... %.2f %%",
-			float32(atomic.LoadInt32(&worked))/float32(len(todoList))*100,
-		)
+		p := progressPercent()
+		log.Printf("updateEvents %s@%s (%.2f %%)\n", inst.CharName, inst.CharServer, progressPercent())
+		inst.progress("[3 / 3] 전투 정보 분석 중... %.2f %%", p)
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -296,7 +313,6 @@ func (inst *analysisInstance) updateEvents() bool {
 
 			err := inst.try(func() error { return inst.callGraphQl(ctx, tmplReportCastsEvents, query, &resp) })
 			if err != nil {
-				fmt.Printf("%+v\n", errors.WithStack(err))
 				return err
 			}
 
@@ -345,6 +361,9 @@ func (inst *analysisInstance) updateEvents() bool {
 	// 미완료되면 실패
 	for _, todo := range todoList {
 		if !todo.done {
+			sentry.CaptureException(errors.Errorf(
+				"Report: %s (fight: %d) / %s@%s / retries : %d", todo.ReportID, todo.FightID, inst.CharName, inst.CharServer, todo.retries,
+			))
 			return false
 		}
 	}

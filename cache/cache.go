@@ -3,12 +3,11 @@ package cache
 import (
 	"fmt"
 	"hash/fnv"
-	"log"
 	"os"
 	"sync"
 
+	"github.com/getsentry/sentry-go"
 	jsoniter "github.com/json-iterator/go"
-	"github.com/pkg/errors"
 )
 
 func init() {
@@ -16,12 +15,17 @@ func init() {
 	os.MkdirAll("./cached-json/events", 0700)
 }
 
+type cacheKey struct {
+	h64  uint64
+	h64a uint64
+}
+
 var (
 	cacheSavingLock sync.RWMutex
-	cacheSaving     = make(map[uint64]struct{}, 32)
+	cacheSaving     = make(map[cacheKey]struct{}, 32)
 )
 
-func lock(h uint64) bool {
+func lock(h cacheKey) bool {
 	cacheSavingLock.Lock()
 	defer cacheSavingLock.Unlock()
 
@@ -31,13 +35,13 @@ func lock(h uint64) bool {
 	}
 	return !ok
 }
-func unlock(h uint64) {
+func unlock(h cacheKey) {
 	cacheSavingLock.Lock()
 	defer cacheSavingLock.Unlock()
 
 	delete(cacheSaving, h)
 }
-func checkSkip(h uint64) bool {
+func checkSkip(h cacheKey) bool {
 	cacheSavingLock.RLock()
 	defer cacheSavingLock.RUnlock()
 
@@ -55,9 +59,17 @@ func cache(
 	h := fnv.New64a()
 	fmt.Fprint(h, dir)
 	fmt.Fprintf(h, path, pathArgs...)
-	hash := h.Sum64()
 
-	fsPath := fmt.Sprintf("%s/%016x.json.gz", dir, hash)
+	ha := fnv.New64()
+	fmt.Fprint(ha, dir)
+	fmt.Fprintf(ha, path, pathArgs...)
+
+	hash := cacheKey{
+		h64:  h.Sum64(),
+		h64a: ha.Sum64(),
+	}
+
+	fsPath := fmt.Sprintf("%s/%016x-%016x.json", dir, hash.h64, hash.h64a)
 
 	if saveMode {
 		if !lock(hash) {
@@ -67,12 +79,14 @@ func cache(
 
 		fs, err := os.Create(fsPath)
 		if err != nil {
+			sentry.CaptureException(err)
 			return false
 		}
 		defer fs.Close()
 
 		err = jsoniter.NewEncoder(fs).Encode(r)
 		if err != nil {
+			sentry.CaptureException(err)
 			fs.Close()
 			os.Remove(fsPath)
 			return false
@@ -92,7 +106,7 @@ func cache(
 
 		err = jsoniter.NewDecoder(fs).Decode(r)
 		if err != nil {
-			log.Printf("%+v\n", errors.WithStack(err))
+			sentry.CaptureException(err)
 			return false
 		}
 		return true

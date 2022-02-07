@@ -10,13 +10,13 @@ var (
 		"WhiteMage":   20,
 		"Scholar":     21,
 		"Astrologian": 22,
-		//"Sage": 23,
+		"Sage":        23,
 
 		"Monk":    31,
 		"Dragoon": 32,
 		"Ninja":   33,
 		"Samurai": 34,
-		//"Reaper": 35,
+		"Reaper":  35,
 
 		"Bard":      40,
 		"Machinist": 41,

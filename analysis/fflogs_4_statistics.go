@@ -7,13 +7,6 @@ import (
 	"ffxiv_check/ffxiv"
 )
 
-var (
-	skillIdDeath  = -1
-	skillIdPotion = -2
-
-	potionBuffTime = 30 * 1000
-)
-
 func (inst *analysisInstance) buildReport() (r *Statistics) {
 	log.Printf("buildReport %s@%s\n", inst.CharName, inst.CharServer)
 	r = &Statistics{
@@ -27,6 +20,10 @@ func (inst *analysisInstance) buildReport() (r *Statistics) {
 	encounterMap := make(map[int]*StatisticEncounter)
 
 	for _, fight := range inst.Fights {
+		if !fight.DoneEvents {
+			continue
+		}
+
 		encounterData, ok := encounterMap[fight.EncounterID]
 		if !ok {
 			encounterData = &StatisticEncounter{
@@ -53,8 +50,8 @@ func (inst *analysisInstance) buildReport() (r *Statistics) {
 		}
 		jobData.TotalKills++
 
-		for _, skillId := range ffxiv.SkillDataEachJob[fight.Job] {
-			skillInfo := ffxiv.SkillDataMap[skillId]
+		for _, skillId := range inst.skillSets.Job[fight.Job] {
+			skillInfo := inst.skillSets.Action[skillId]
 
 			buffUsage, ok := jobData.dataMap[skillId]
 			if !ok {
@@ -77,15 +74,15 @@ func (inst *analysisInstance) buildReport() (r *Statistics) {
 			totalCooldown := 0
 
 			switch skillId {
-			case skillIdDeath:
+			case ffxiv.SkillIdDeath:
 				used = len(fight.Deaths)
 
-			case skillIdPotion:
+			case ffxiv.SkillIdPotion:
 				for _, event := range fight.Buffs {
 					if event.removed {
-						event.timestamp = event.timestamp - potionBuffTime
+						event.timestamp = event.timestamp - ffxiv.PotionBuffTime
 					}
-					if event.timestamp < nextCooldown {
+					if nextCooldown > 0 && event.timestamp < nextCooldown {
 						// 적용 후 꺼진 버프
 						// 탕약 버프가 두번 뜨는 경우가 있음
 						continue
@@ -94,6 +91,10 @@ func (inst *analysisInstance) buildReport() (r *Statistics) {
 					used++
 					nextCooldown = event.timestamp + skillInfo.Cooldown*1000
 					totalCooldown += skillInfo.Cooldown * 1000
+				}
+
+				if used > 2 {
+					log.Println("ffffffffffffff")
 				}
 
 			default:
@@ -182,7 +183,7 @@ func (inst *analysisInstance) buildReport() (r *Statistics) {
 			sort.Slice(
 				job.Data,
 				func(i, k int) bool {
-					return ffxiv.SkillDataMap[job.Data[i].Info.ID].OrderIndex < ffxiv.SkillDataMap[job.Data[k].Info.ID].OrderIndex
+					return inst.skillSets.Action[job.Data[i].Info.ID].OrderIndex < inst.skillSets.Action[job.Data[k].Info.ID].OrderIndex
 				},
 			)
 		}

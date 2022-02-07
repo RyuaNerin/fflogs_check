@@ -12,6 +12,9 @@ import (
 	"ffxiv_check/cache"
 	"ffxiv_check/share"
 	"ffxiv_check/share/parallel"
+
+	"github.com/getsentry/sentry-go"
+	"github.com/pkg/errors"
 )
 
 func (inst *analysisInstance) updateFights() bool {
@@ -151,18 +154,20 @@ func (inst *analysisInstance) updateFights() bool {
 				}
 			}
 
-			fight.Found = true
+			fight.DoneSummary = true
 			fight.StartTime = respFight.StartTime
 			fight.EndTime = respFight.EndTime
 			fight.SourceID = sourceId
 		}
 	}
 
+	progressPercent := func() float32 {
+		return float32(atomic.LoadInt32(&worked)) / float32(len(todoList)) * 100
+	}
 	progress := func() {
-		inst.progress(
-			"[2 / 3] 전투 정보 가져오는 중... %.2f %%",
-			float32(atomic.LoadInt32(&worked))/float32(len(todoList))*100,
-		)
+		p := progressPercent()
+		log.Printf("updateFights %s@%s (%.2f %%)\n", inst.CharName, inst.CharServer, p)
+		inst.progress("[2 / 3] 전투 정보 가져오는 중... %.2f %%", p)
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -202,6 +207,7 @@ func (inst *analysisInstance) updateFights() bool {
 
 			err := inst.try(func() error { return inst.callGraphQl(ctx, tmplReportSummary, query, &resp) })
 			if err != nil {
+				sentry.CaptureException(err)
 				return err
 			}
 
@@ -250,16 +256,14 @@ func (inst *analysisInstance) updateFights() bool {
 	// 미완료되면 실패
 	for _, todo := range todoList {
 		if !todo.done {
+			sentry.CaptureException(errors.Errorf(
+				"Report: %s (%s) / %s@%s / retries : %d", todo.ReportID, todo.FightIDs, inst.CharName, inst.CharServer, todo.retries,
+			))
 			return false
-		}
-	}
-	for k, fight := range inst.Fights {
-		if !fight.Found {
-			delete(inst.Fights, k)
 		}
 	}
 
 	progress()
 
-	return true
+	return len(inst.Fights) > 0
 }

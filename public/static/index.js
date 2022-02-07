@@ -123,7 +123,7 @@ document.addEventListener(
                                             socket.send(JSON.stringify(requestData));
                                             break;
                                         case "waiting":
-                                            content.innerText = `대기얼 ${resp.data}`;
+                                            content.innerText = `대기열 ${resp.data} 번 째`;
                                             break;
                                         case "start":
                                             content.innerText = `분석 시작`;

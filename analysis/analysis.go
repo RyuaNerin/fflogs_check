@@ -57,6 +57,12 @@ func Analyze(ctx context.Context, progress func(p string), opt *AnalyzeOptions) 
 	}
 	defer close(inst.progressString)
 
+	if opt.CharRegion == "kr" {
+		inst.skillSets = ffxiv.Korea
+	} else {
+		inst.skillSets = ffxiv.Global
+	}
+
 	copy(inst.EncounterIDs, opt.Encouters)
 
 	for _, job := range opt.Jobs {
