@@ -85,8 +85,14 @@ document.addEventListener(
                                     'jobs'        : jobs,
                                 };
                                 
-                                //let socket = new WebSocket((location.protocol == "https:" ? "wss://" : "ws://") + location.host + "/api/analysis");
-                                let socket = new WebSocket("ws://127.0.0.1:5555/api/analysis");
+                                //let socket = new WebSocket();
+                                let socket = new WebSocket(
+                                    (
+                                        location.host == "dev.ryuar.in:5500"
+                                        ? "ws://127.0.0.1:5555"
+                                        : (location.protocol == "https:" ? "wss://" : "ws://") + location.host
+                                    ) + "/api/analysis"
+                                );
                                 
                                 socket.onopen = function(e) {
                                     socket.send(token);
