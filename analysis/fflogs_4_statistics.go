@@ -1,6 +1,7 @@
 package analysis
 
 import (
+	"log"
 	"sort"
 
 	"ffxiv_check/ffxiv"
@@ -14,6 +15,7 @@ var (
 )
 
 func (inst *analysisInstance) buildReport() (r *Statistics) {
+	log.Printf("buildReport %s@%s\n", inst.CharName, inst.CharServer)
 	r = &Statistics{
 		CharName:   inst.CharName,
 		CharServer: inst.CharServer,
@@ -172,8 +174,8 @@ func (inst *analysisInstance) buildReport() (r *Statistics) {
 		sort.Slice(
 			encData.Jobs,
 			func(i, k int) bool {
-				//return ffxiv.JobOrder[encData.Jobs[i].Job] > ffxiv.JobOrder[encData.Jobs[k].Job]
-				return encData.Jobs[i].TotalKills > encData.Jobs[k].TotalKills
+				return ffxiv.JobOrder[encData.Jobs[i].Job] > ffxiv.JobOrder[encData.Jobs[k].Job]
+				//return encData.Jobs[i].TotalKills > encData.Jobs[k].TotalKills
 			},
 		)
 		for _, job := range encData.jobsMap {

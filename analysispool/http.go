@@ -84,7 +84,6 @@ func Do(ctx context.Context, ws *websocket.Conn) {
 	}()
 
 	queueLock.Lock()
-	q.Reorder(len(queue))
 	if len(queue) == 0 {
 		select {
 		case queueWake <- struct{}{}:
@@ -92,6 +91,7 @@ func Do(ctx context.Context, ws *websocket.Conn) {
 		}
 	}
 	queue = append(queue, &q)
+	q.Reorder(len(queue))
 	queueLock.Unlock()
 
 	<-q.done

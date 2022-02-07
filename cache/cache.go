@@ -1,7 +1,6 @@
 package cache
 
 import (
-	"compress/gzip"
 	"fmt"
 	"hash/fnv"
 	"log"
@@ -72,20 +71,8 @@ func cache(
 		}
 		defer fs.Close()
 
-		gz := gzip.NewWriter(fs)
-		defer gz.Flush()
-
-		err = jsoniter.NewEncoder(gz).Encode(r)
+		err = jsoniter.NewEncoder(fs).Encode(r)
 		if err != nil {
-			gz.Close()
-			fs.Close()
-			os.Remove(fsPath)
-			return false
-		}
-
-		err = gz.Flush()
-		if err != nil {
-			gz.Close()
 			fs.Close()
 			os.Remove(fsPath)
 			return false
@@ -103,13 +90,7 @@ func cache(
 		}
 		defer fs.Close()
 
-		gz, err := gzip.NewReader(fs)
-		if err != nil {
-			log.Printf("%+v\n", errors.WithStack(err))
-			return false
-		}
-
-		err = jsoniter.NewDecoder(gz).Decode(r)
+		err = jsoniter.NewDecoder(fs).Decode(r)
 		if err != nil {
 			log.Printf("%+v\n", errors.WithStack(err))
 			return false

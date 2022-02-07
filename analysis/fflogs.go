@@ -57,6 +57,8 @@ type analysisFight struct {
 	StartTime int
 	EndTime   int
 
+	Found bool
+
 	EncounterID int
 	Job         string
 
@@ -169,6 +171,10 @@ func (inst *analysisInstance) callGraphQl(ctx context.Context, tmpl *template.Te
 		return errors.WithStack(err)
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusUnauthorized {
+		client.Reset()
+	}
 
 	err = jsoniter.NewDecoder(resp.Body).Decode(&respData)
 	if err != io.EOF && err != nil {

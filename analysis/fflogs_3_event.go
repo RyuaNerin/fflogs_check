@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"hash/fnv"
+	"log"
 	"sort"
 	"sync/atomic"
 
@@ -16,6 +17,7 @@ import (
 )
 
 func (inst *analysisInstance) updateEvents() bool {
+	log.Printf("updateEvents %s@%s\n", inst.CharName, inst.CharServer)
 	type TodoFightEvent struct {
 		Done      bool
 		StartTime int
@@ -98,19 +100,17 @@ func (inst *analysisInstance) updateEvents() bool {
 	}
 
 	var worked int32
-	do := func(hash string, reportData *RespReportData, save bool) {
+	do := func(hash string, resp *RespReportData, save bool) {
 		td, ok := todoMap[hash]
 		if !ok {
 			return
 		}
 
-		td.retries = 0
-
-		if reportData == nil {
-			td.done = true
+		if resp == nil {
 			td.Casts.Done = true
 			td.Buffs.Done = true
 			td.Deaths.Done = true
+			td.done = true
 			atomic.AddInt32(&worked, 1)
 			return
 		}
@@ -123,7 +123,7 @@ func (inst *analysisInstance) updateEvents() bool {
 				td.Casts.StartTime, td.Casts.EndTime,
 				td.Buffs.StartTime, td.Buffs.EndTime,
 				td.Deaths.StartTime, td.Deaths.EndTime,
-				reportData,
+				resp,
 				true,
 			)
 		}
@@ -137,21 +137,22 @@ func (inst *analysisInstance) updateEvents() bool {
 			return
 		}
 
-		if reportData.Casts != nil {
-			if reportData.Casts.NextPageTimestamp == nil {
+		if resp.Casts != nil {
+			if resp.Casts.NextPageTimestamp == nil {
 				td.Casts.Done = true
 			} else {
-				td.Casts.StartTime = *reportData.Casts.NextPageTimestamp
+				td.Casts.StartTime = *resp.Casts.NextPageTimestamp
+				td.retries = 0
 			}
 
 			l := len(fightInfo.Casts)
-			if cap(fightInfo.Casts) < l+len(reportData.Casts.Data) {
-				newArr := make([]analysisEvent, l, l+len(reportData.Casts.Data))
+			if cap(fightInfo.Casts) < l+len(resp.Casts.Data) {
+				newArr := make([]analysisEvent, l, l+len(resp.Casts.Data))
 				copy(newArr, fightInfo.Casts)
 				fightInfo.Casts = newArr
 			}
 
-			for _, event := range reportData.Casts.Data {
+			for _, event := range resp.Casts.Data {
 				switch event.Type {
 				case "cast":
 					fightInfo.Casts = append(
@@ -165,21 +166,22 @@ func (inst *analysisInstance) updateEvents() bool {
 			}
 		}
 
-		if reportData.Buffs != nil {
-			if reportData.Buffs.NextPageTimestamp == nil {
+		if resp.Buffs != nil {
+			if resp.Buffs.NextPageTimestamp == nil {
 				td.Buffs.Done = true
 			} else {
-				td.Buffs.StartTime = *reportData.Buffs.NextPageTimestamp
+				td.Buffs.StartTime = *resp.Buffs.NextPageTimestamp
+				td.retries = 0
 			}
 
 			l := len(fightInfo.Buffs)
-			if cap(fightInfo.Buffs) < l+len(reportData.Buffs.Data) {
-				newArr := make([]analysisBuff, l, l+len(reportData.Buffs.Data))
+			if cap(fightInfo.Buffs) < l+len(resp.Buffs.Data) {
+				newArr := make([]analysisBuff, l, l+len(resp.Buffs.Data))
 				copy(newArr, fightInfo.Buffs)
 				fightInfo.Buffs = newArr
 			}
 
-			for _, event := range reportData.Buffs.Data {
+			for _, event := range resp.Buffs.Data {
 				switch event.Type {
 				case "applybuff":
 					fightInfo.Buffs = append(
@@ -203,21 +205,22 @@ func (inst *analysisInstance) updateEvents() bool {
 			}
 		}
 
-		if reportData.Deaths != nil {
-			if reportData.Deaths.NextPageTimestamp == nil {
+		if resp.Deaths != nil {
+			if resp.Deaths.NextPageTimestamp == nil {
 				td.Deaths.Done = true
 			} else {
-				td.Deaths.StartTime = *reportData.Deaths.NextPageTimestamp
+				td.Deaths.StartTime = *resp.Deaths.NextPageTimestamp
+				td.retries = 0
 			}
 
 			l := len(fightInfo.Deaths)
-			if cap(fightInfo.Deaths) < l+len(reportData.Deaths.Data) {
-				newArr := make([]analysisDeath, l, l+len(reportData.Deaths.Data))
+			if cap(fightInfo.Deaths) < l+len(resp.Deaths.Data) {
+				newArr := make([]analysisDeath, l, l+len(resp.Deaths.Data))
 				copy(newArr, fightInfo.Deaths)
 				fightInfo.Deaths = newArr
 			}
 
-			for _, event := range reportData.Deaths.Data {
+			for _, event := range resp.Deaths.Data {
 				switch event.Type {
 				case "death":
 					fightInfo.Deaths = append(

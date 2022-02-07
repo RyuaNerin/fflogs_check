@@ -2,12 +2,15 @@ package analysis
 
 import (
 	"fmt"
+	"log"
+	"sort"
 	"strconv"
 
 	"github.com/pkg/errors"
 )
 
 func (inst *analysisInstance) updateReports() bool {
+	log.Printf("updateReports %s@%s\n", inst.CharName, inst.CharServer)
 	inst.progress("[1 / 3] 전투 기록 가져오는 중...")
 
 	var resp struct {
@@ -74,6 +77,15 @@ func (inst *analysisInstance) updateReports() bool {
 			inst.Fights[key] = value
 			report.Fights = append(report.Fights, value)
 		}
+	}
+
+	for _, report := range inst.Reports {
+		sort.Slice(
+			report.Fights,
+			func(i, k int) bool {
+				return report.Fights[i].FightID < report.Fights[k].FightID
+			},
+		)
 	}
 
 	return len(inst.Fights) > 0

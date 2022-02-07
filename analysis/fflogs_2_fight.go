@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"hash/fnv"
+	"log"
 	"sync/atomic"
 
 	"ffxiv_check/cache"
@@ -14,6 +15,7 @@ import (
 )
 
 func (inst *analysisInstance) updateFights() bool {
+	log.Printf("updateFights %s@%s\n", inst.CharName, inst.CharServer)
 	type TodoData struct {
 		Hash     string
 		ReportID string
@@ -71,14 +73,15 @@ func (inst *analysisInstance) updateFights() bool {
 		} `json:"fights"`
 		MasterData struct {
 			Actors []struct {
-				ID   int    `json:"id"`
-				Name string `json:"name"`
+				ID      int    `json:"id"`
+				Name    string `json:"name"`
+				SubType string `json:"subType"`
 			} `json:"actors"`
 		} `json:"masterData"`
 	}
 
 	var worked int32
-	do := func(hash string, reportData *RespReportData, save bool) {
+	do := func(hash string, resp *RespReportData, save bool) {
 		td, ok := todoMap[hash]
 		if !ok {
 			return
@@ -90,25 +93,25 @@ func (inst *analysisInstance) updateFights() bool {
 			atomic.AddInt32(&worked, 1)
 		}
 
-		if reportData == nil {
+		if resp == nil {
 			return
 		}
 
-		for _, fightData := range reportData.Fights {
+		for _, respFight := range resp.Fights {
 			if save {
 				cache.Report(
 					td.ReportID,
 					td.FightIDs,
-					reportData,
+					resp,
 					true,
 				)
 			}
 
 			sourceId := 0
-			for _, friendlyPlayerID := range fightData.FriendlyPlayers {
-				for _, actor := range reportData.MasterData.Actors {
-					if friendlyPlayerID == actor.ID && actor.Name == inst.CharName {
-						sourceId = friendlyPlayerID
+			for _, respFightPlayerID := range respFight.FriendlyPlayers {
+				for _, respActor := range resp.MasterData.Actors {
+					if respFightPlayerID == respActor.ID && respActor.Name == inst.CharName {
+						sourceId = respFightPlayerID
 					}
 				}
 				if sourceId != 0 {
@@ -118,20 +121,40 @@ func (inst *analysisInstance) updateFights() bool {
 
 			key := fightKey{
 				ReportID: td.ReportID,
-				FightID:  fightData.ID,
+				FightID:  respFight.ID,
 			}
-			f, ok := inst.Fights[key]
+			fight, ok := inst.Fights[key]
 			if !ok {
 				continue
 			}
 
+			// 아이디나 서버를 변경 한 경우
 			if sourceId == 0 {
-				continue
+				// 직겹이 없는 경우 직업으로 검색이 가능함.
+				for _, respFightPlayerID := range respFight.FriendlyPlayers {
+					for _, respActor := range resp.MasterData.Actors {
+						if respFightPlayerID == respActor.ID && respActor.SubType == fight.Job {
+							if sourceId != 0 {
+								// 직겹으로 갔음!!!
+								sourceId = 0
+								break
+							} else {
+								sourceId = respFightPlayerID
+							}
+						}
+					}
+				}
+
+				// 그래도 못 찾은 경우 어쩔 수 없음.
+				if sourceId == 0 {
+					continue
+				}
 			}
 
-			f.StartTime = fightData.StartTime
-			f.EndTime = fightData.EndTime
-			f.SourceID = sourceId
+			fight.Found = true
+			fight.StartTime = respFight.StartTime
+			fight.EndTime = respFight.EndTime
+			fight.SourceID = sourceId
 		}
 	}
 
@@ -228,6 +251,11 @@ func (inst *analysisInstance) updateFights() bool {
 	for _, todo := range todoList {
 		if !todo.done {
 			return false
+		}
+	}
+	for k, fight := range inst.Fights {
+		if !fight.Found {
+			delete(inst.Fights, k)
 		}
 	}
 

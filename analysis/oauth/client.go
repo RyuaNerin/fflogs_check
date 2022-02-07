@@ -30,6 +30,12 @@ func New(oauthID string, oauthSecret string) *Client {
 	}
 }
 
+func (c *Client) Reset() {
+	c.headerLock.Lock()
+	c.headerValue = ""
+	c.headerLock.Unlock()
+}
+
 func (c *Client) NewRequest(ctx context.Context, method string, urlStr string, body io.Reader) (*http.Request, error) {
 	c.headerLock.Lock()
 	defer c.headerLock.Unlock()
