@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"compress/gzip"
 	"fmt"
 	"hash/fnv"
 	"os"
@@ -16,8 +17,8 @@ func init() {
 }
 
 type cacheKey struct {
-	h64  uint64
-	h64a uint64
+	h1 uint64
+	h2 uint64
 }
 
 var (
@@ -56,20 +57,20 @@ func cache(
 	path string,
 	pathArgs ...interface{},
 ) bool {
-	h := fnv.New64a()
-	fmt.Fprint(h, dir)
-	fmt.Fprintf(h, path, pathArgs...)
+	h1 := fnv.New64a()
+	fmt.Fprint(h1, dir)
+	fmt.Fprintf(h1, path, pathArgs...)
 
-	ha := fnv.New64()
-	fmt.Fprint(ha, dir)
-	fmt.Fprintf(ha, path, pathArgs...)
+	h2 := fnv.New64()
+	fmt.Fprint(h2, dir)
+	fmt.Fprintf(h2, path, pathArgs...)
 
 	hash := cacheKey{
-		h64:  h.Sum64(),
-		h64a: ha.Sum64(),
+		h1: h1.Sum64(),
+		h2: h2.Sum64(),
 	}
 
-	fsPath := fmt.Sprintf("%s/%016x-%016x.json", dir, hash.h64, hash.h64a)
+	fsPath := fmt.Sprintf("%s/%016x-%016x.json.gz", dir, hash.h1, hash.h2)
 
 	if saveMode {
 		if !lock(hash) {
@@ -84,9 +85,22 @@ func cache(
 		}
 		defer fs.Close()
 
-		err = jsoniter.NewEncoder(fs).Encode(r)
+		gz := gzip.NewWriter(fs)
+		defer gz.Close()
+
+		err = jsoniter.NewEncoder(gz).Encode(r)
 		if err != nil {
 			sentry.CaptureException(err)
+			gz.Close()
+			fs.Close()
+			os.Remove(fsPath)
+			return false
+		}
+
+		err = gz.Flush()
+		if err != nil {
+			sentry.CaptureException(err)
+			gz.Close()
 			fs.Close()
 			os.Remove(fsPath)
 			return false
@@ -104,7 +118,14 @@ func cache(
 		}
 		defer fs.Close()
 
-		err = jsoniter.NewDecoder(fs).Decode(r)
+		gz, err := gzip.NewReader(fs)
+		if err != nil {
+			sentry.CaptureException(err)
+			return false
+		}
+		defer gz.Close()
+
+		err = jsoniter.NewDecoder(gz).Decode(r)
 		if err != nil {
 			sentry.CaptureException(err)
 			return false
