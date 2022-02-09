@@ -9,7 +9,6 @@ import (
 	"sort"
 	"sync/atomic"
 
-	"ffxiv_check/cache"
 	"ffxiv_check/share"
 	"ffxiv_check/share/parallel"
 
@@ -126,7 +125,7 @@ func (inst *analysisInstance) updateEvents() bool {
 		}
 
 		if save {
-			cache.CastsEvent(
+			cacheCastsEvent(
 				td.ReportID,
 				td.FightID,
 				td.SourceID,
@@ -270,7 +269,7 @@ func (inst *analysisInstance) updateEvents() bool {
 	var respCache RespReportData
 	for _, todo := range todoList {
 		for {
-			ok := cache.CastsEvent(
+			ok := cacheCastsEvent(
 				todo.ReportID,
 				todo.FightID,
 				todo.SourceID,

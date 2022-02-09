@@ -9,7 +9,6 @@ import (
 	"log"
 	"sync/atomic"
 
-	"ffxiv_check/cache"
 	"ffxiv_check/share"
 	"ffxiv_check/share/parallel"
 
@@ -99,17 +98,16 @@ func (inst *analysisInstance) updateFights() bool {
 		if resp == nil {
 			return
 		}
+		if save {
+			cacheReport(
+				td.ReportID,
+				td.FightIDs,
+				resp,
+				true,
+			)
+		}
 
 		for _, respFight := range resp.Fights {
-			if save {
-				cache.Report(
-					td.ReportID,
-					td.FightIDs,
-					resp,
-					true,
-				)
-			}
-
 			sourceId := 0
 			for _, respFightPlayerID := range respFight.FriendlyPlayers {
 				for _, respActor := range resp.MasterData.Actors {
@@ -174,7 +172,7 @@ func (inst *analysisInstance) updateFights() bool {
 
 	var respCache RespReportData
 	for _, todo := range todoList {
-		ok := cache.Report(
+		ok := cacheReport(
 			todo.ReportID,
 			todo.FightIDs,
 			&respCache,

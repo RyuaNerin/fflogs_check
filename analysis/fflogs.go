@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"ffxiv_check/ffxiv"
+	"ffxiv_check/share"
 
 	"github.com/getsentry/sentry-go"
 	jsoniter "github.com/json-iterator/go"
@@ -114,7 +115,7 @@ func (inst *analysisInstance) try(f func() error) (err error) {
 		if err == nil {
 			break
 		}
-		if err == context.Canceled || err == context.DeadlineExceeded {
+		if share.IsContextClosedError(err) {
 			return err
 		}
 		if i+1 < maxRetries {
@@ -172,7 +173,9 @@ func (inst *analysisInstance) callGraphQl(ctx context.Context, tmpl *template.Te
 	req.Header.Set("Content-Type", "application/json; encoding=utf-8")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		sentry.CaptureException(err)
+		if !share.IsContextClosedError(err) {
+			sentry.CaptureException(err)
+		}
 		return err
 	}
 	defer resp.Body.Close()

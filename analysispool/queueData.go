@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"context"
 	"log"
-	"strings"
 	"sync"
 
 	"ffxiv_check/analysis"
+	"ffxiv_check/share"
 
 	"github.com/getsentry/sentry-go"
 	"github.com/gorilla/websocket"
@@ -27,7 +27,7 @@ type queueData struct {
 	ctx       context.Context
 	ctxCancel func()
 
-	done chan struct{}
+	chanResp chan *analysis.Statistics
 
 	msgLock sync.Mutex
 }
@@ -35,10 +35,7 @@ type queueData struct {
 var (
 	eventRespBufferPool = sync.Pool{
 		New: func() interface{} {
-			b := new(bytes.Buffer)
-			b.Grow(64 * 1024)
-
-			return b
+			return bytes.NewBuffer(make([]byte, 16*1024))
 		},
 	}
 
@@ -83,12 +80,11 @@ func queueWorker() {
 			&q.opt,
 		)
 		log.Printf("End: %s@%s", q.opt.CharName, q.opt.CharServer)
-		if !ok {
-			q.Error()
+		if ok {
+			q.chanResp <- resp
 		} else {
-			q.Succ(resp)
+			q.chanResp <- nil
 		}
-		q.done <- struct{}{}
 	}
 }
 
@@ -133,7 +129,9 @@ func (q *queueData) Reorder(order int) {
 func (q *queueData) Start() {
 	err := q.MessageBytes(eventStart)
 	if err != nil {
-		sentry.CaptureException(err)
+		if err != websocket.ErrCloseSent {
+			sentry.CaptureException(err)
+		}
 		q.ctxCancel()
 	}
 }
@@ -165,7 +163,7 @@ func (q *queueData) Error() {
 }
 
 func (q *queueData) Succ(r *analysis.Statistics) {
-	sb := tmplAnalysisPool.Get().(*strings.Builder)
+	sb := tmplAnalysisPool.Get().(*bytes.Buffer)
 	defer tmplAnalysisPool.Put(sb)
 
 	err := tmplAnalysis.Execute(sb, r)
@@ -181,12 +179,14 @@ func (q *queueData) Succ(r *analysis.Statistics) {
 		Data  string `json:"data"`
 	}{
 		Event: "complete",
-		Data:  sb.String(),
+		Data:  share.B2s(sb.Bytes()),
 	}
 
-	err = q.MessageJson(&resp)
+	err = q.MessageJson(resp)
 	if err != nil {
 		sentry.CaptureException(err)
+
 		q.ctxCancel()
+		return
 	}
 }

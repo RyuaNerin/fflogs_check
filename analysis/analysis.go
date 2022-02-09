@@ -3,7 +3,6 @@ package analysis
 import (
 	"context"
 	"os"
-	"time"
 
 	"ffxiv_check/analysis/oauth"
 	"ffxiv_check/ffxiv"
@@ -78,19 +77,13 @@ func Analyze(ctx context.Context, progress func(p string), opt *AnalyzeOptions) 
 	go func() {
 		defer close(chanDone)
 
-		nextMessage := time.Now()
 		for {
 			select {
 			case <-ctx.Done():
 				return
 
 			case s := <-inst.progressString:
-				if time.Now().Before(nextMessage) {
-					continue
-				}
-
 				progress(s)
-				nextMessage = time.Now().Add(250 * time.Millisecond)
 			}
 		}
 	}()

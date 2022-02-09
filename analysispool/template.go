@@ -1,9 +1,9 @@
 package analysispool
 
 import (
+	"bytes"
 	"fmt"
 	"html/template"
-	"strings"
 	"sync"
 )
 
@@ -20,7 +20,7 @@ var (
 
 	tmplAnalysisPool = sync.Pool{
 		New: func() interface{} {
-			b := new(strings.Builder)
+			b := new(bytes.Buffer)
 			b.Grow(64 * 1024)
 
 			return b

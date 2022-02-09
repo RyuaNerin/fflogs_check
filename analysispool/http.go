@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"time"
 
+	"ffxiv_check/analysis"
+
 	"github.com/getsentry/sentry-go"
 	"github.com/gorilla/websocket"
 )
@@ -31,7 +33,7 @@ func Do(ctx context.Context, ws *websocket.Conn) {
 		ws:        ws,
 		ctx:       ctx,
 		ctxCancel: ctxCancel,
-		done:      make(chan struct{}),
+		chanResp:  make(chan *analysis.Statistics),
 	}
 
 	err = ws.ReadJSON(&q.opt)
@@ -55,54 +57,60 @@ func Do(ctx context.Context, ws *websocket.Conn) {
 		}
 	}()
 
-	passed := false
-	switch {
-	case len(q.opt.CharName) < 3:
-	case len(q.opt.CharServer) < 3:
-	case len(q.opt.CharRegion) < 2:
-	case len(q.opt.Encouters) == 0:
-	case len(q.opt.Jobs) == 0:
-	default:
-		passed = true
-	}
-	if !passed {
+	if !checkOptionValidation(&q.opt) {
 		q.Error()
 		return
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	go func() {
-		ticker := time.NewTicker(5 * time.Second)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ticker.C:
-				err := ws.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(5*time.Second))
-				if err != nil {
-					sentry.CaptureException(err)
-					ctxCancel()
+	h := getOptionHash(&q.opt)
+
+	var stat *analysis.Statistics
+	if csStatistics.Load(h, &stat) {
+		q.Succ(stat)
+	} else {
+		go func() {
+			ticker := time.NewTicker(5 * time.Second)
+			defer ticker.Stop()
+			for {
+				select {
+				case <-ticker.C:
+					err := ws.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(5*time.Second))
+					if err != nil {
+						if err != websocket.ErrCloseSent {
+							sentry.CaptureException(err)
+						}
+						ctxCancel()
+						return
+					}
+
+				case <-ctx.Done():
 					return
 				}
+			}
+		}()
 
-			case <-ctx.Done():
-				return
+		queueLock.Lock()
+		if len(queue) == 0 {
+			select {
+			case queueWake <- struct{}{}:
+			default:
 			}
 		}
-	}()
+		queue = append(queue, &q)
+		q.Reorder(len(queue))
+		queueLock.Unlock()
 
-	queueLock.Lock()
-	if len(queue) == 0 {
-		select {
-		case queueWake <- struct{}{}:
-		default:
+		stat = <-q.chanResp
+
+		if stat == nil {
+			q.Error()
+		} else {
+			csStatistics.Save(h, stat)
+			q.Succ(stat)
 		}
 	}
-	queue = append(queue, &q)
-	q.Reorder(len(queue))
-	queueLock.Unlock()
-
-	<-q.done
 
 	time.Sleep(time.Second)
 
