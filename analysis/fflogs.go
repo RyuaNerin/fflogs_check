@@ -22,7 +22,7 @@ import (
 
 const (
 	maxRetries = 3
-	workers    = 4
+	workers    = 8
 
 	maxSummary = 50
 	maxEvents  = 25
@@ -52,7 +52,7 @@ type analysisInstance struct {
 
 	progressString chan string
 
-	skillSets ffxiv.SkillSets
+	skillSets *ffxiv.SkillSets
 }
 type analysisReport struct {
 	ReportID string
@@ -76,6 +76,10 @@ type analysisFight struct {
 	Casts  []analysisEvent
 	Buffs  []analysisBuff
 	Deaths []analysisDeath
+
+	AutoAttacks int
+
+	skillData map[int]*analysisFightSkill
 }
 type analysisEvent struct {
 	timestamp int
@@ -88,6 +92,12 @@ type analysisBuff struct {
 }
 type analysisDeath struct {
 	timestamp int
+}
+
+type analysisFightSkill struct {
+	Used       int
+	UsedShared int // 쿨 공유하는거 최대 사용 횟수 맞추기 위한 수...
+	Max        int
 }
 
 var (

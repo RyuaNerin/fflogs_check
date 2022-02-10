@@ -22,6 +22,10 @@
 				nextPageTimestamp
 			}
 			{{ end }}
+			
+			{{ if .NeedsAttacks }}
+			attacks: table(dataType: DamageDone, startTime: {{ .Deaths.StartTime }}, endTime: {{ .Deaths.EndTime }}, sourceID: {{ .SourceID }}, abilityID: 7)
+			{{ end }}
 		}
 		{{ end }}
 	}

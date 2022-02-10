@@ -50,8 +50,8 @@ var (
 
 func init() {
 	loadSkills("ffxiv/resources/skills.csv")
-	loadActions("ffxiv/resources/exd/action.exh_en.csv", 53, 40, &Global) // BA, AO
-	loadActions("ffxiv/resources/exd/action.exh_ko.csv", 51, 39, &Korea)  // AZ, AN
+	loadActions("ffxiv/resources/exd/action.exh_en.csv", 40, &Global) // BA, AO
+	loadActions("ffxiv/resources/exd/action.exh_ko.csv", 39, &Korea)  // AZ, AN
 
 	update(&Korea, SkillIdDeath, "사망", "015000-015010.png", 0)
 	update(&Global, SkillIdDeath, "Death", "015000-015010.png", 0)
@@ -150,7 +150,7 @@ func loadSkills(path string) {
 	}
 }
 
-func loadActions(path string, columnIsGcd int, columnCooldown int, ss *SkillSets) {
+func loadActions(path string, columnCooldown int, ss *SkillSets) {
 	fs, err := os.Open(path)
 	if err != nil {
 		panic(err)
@@ -169,7 +169,7 @@ func loadActions(path string, columnIsGcd int, columnCooldown int, ss *SkillSets
 			panic(err)
 		}
 
-		if len(d) < columnCooldown || len(d) < columnIsGcd {
+		if len(d) < columnCooldown {
 			continue
 		}
 
@@ -185,16 +185,12 @@ func loadActions(path string, columnIsGcd int, columnCooldown int, ss *SkillSets
 
 		icon, err := strconv.Atoi(d[3])
 		if err != nil {
-			continue
+			panic(err)
 		}
 
-		var cooldown int
-
-		if d[columnIsGcd] == "false" {
-			cooldown, err = strconv.Atoi(d[columnCooldown])
-			if err != nil {
-				continue
-			}
+		cooldown, err := strconv.Atoi(d[columnCooldown])
+		if err != nil {
+			panic(err)
 		}
 
 		md.Name = d[1]

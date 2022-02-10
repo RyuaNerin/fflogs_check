@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	csStatistics      = cache.NewStorage("./cached/statistics", time.Hour)
+	csStatistics      = cache.NewStorage("./_cachedata/statistics", time.Hour)
 	analysisFilesHash uint32
 )
 

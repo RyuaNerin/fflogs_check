@@ -16,9 +16,9 @@ var (
 					"fn": func(value interface{}) string {
 						switch e := value.(type) {
 						case float32:
-							return fmt.Sprintf("%.2f", e)
+							return fmt.Sprintf("%.1f", e)
 						case float64:
-							return fmt.Sprintf("%.2f", e)
+							return fmt.Sprintf("%.1f", e)
 						case int:
 							return strconv.Itoa(e)
 						}

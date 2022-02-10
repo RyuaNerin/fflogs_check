@@ -89,6 +89,7 @@ func (inst *analysisInstance) updateReports() bool {
 				FightID:     rank.Report.FightID,
 				Job:         rank.Spec,
 				EncounterID: encId,
+				skillData:   make(map[int]*analysisFightSkill),
 			}
 
 			inst.Fights[key] = value

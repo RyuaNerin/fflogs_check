@@ -24,7 +24,7 @@
                 data-bs-target="#collapseJobs"
                 aria-expanded="false"
                 aria-controls="collapseJobs"
-            >직업/보스 별 완벽도</button>
+            >완벽도</button>
         </h2>
         <div
             id="collapseJobs"
@@ -59,14 +59,14 @@
                                 <div class="text-primary fw-bold">
                                 {{ else if ge $job.Score 50.0 }}
                                 <div class="text-success fw-bold">
-                                {{ else if ge $job.Score 30.0 }}
+                                {{ else if ge $job.Score 40.0 }}
                                 <div>
                                 {{ else }}
                                 <div class="text-danger">
                                 {{ end }}
                                     {{ fn $job.Score }}
                                 </div>
-                                <div>{{ fn $job.Kills }}</div>
+                                <div>/ {{ fn $job.Kills }}</div>
                             </td>
                             {{ end }}
                         </tr>
@@ -76,23 +76,38 @@
                         {{ range $i, $enc := $.Encounters }}
                         <tr>
                             <th scope="row">{{ $enc.Name }}</th>
-                            {{ range $ii, $job := $.Jobs }}
+                            {{ range $ii, $jobTarget := $.Jobs }}
                             <td class="text-center">
-                                {{ range $iii, $job2 := $enc.Jobs }}
-                                {{ if eq $job.ID $job2.ID }}
-                                {{ if ge $job2.Score 70.0 }}
-                                <div class="text-primary fw-bold">
-                                {{ else if ge $job2.Score 50.0 }}
-                                <div class="text-success fw-bold">
-                                {{ else if ge $job2.Score 30.0 }}
-                                <div>
+                                {{ if eq $jobTarget.ID 0 }}
+                                    {{ if ge $enc.Score 70.0 }}
+                                    <div class="text-primary fw-bold">
+                                    {{ else if ge $enc.Score 50.0 }}
+                                    <div class="text-success fw-bold">
+                                    {{ else if ge $enc.Score 40.0 }}
+                                    <div>
+                                    {{ else }}
+                                    <div class="text-danger">
+                                    {{ end }}
+                                        {{ fn $enc.Score }}
+                                    </div>
+                                    <div>/ {{ fn $enc.Kills }}</div>
                                 {{ else }}
-                                <div class="text-danger">
-                                {{ end }}
-                                    {{ fn $job2.Score }}
-                                </div>
-                                <div>{{ fn $job2.Kills }}</div>                                
-                                {{ end }}
+                                    {{ range $iii, $job := $enc.Jobs }}
+                                        {{ if eq $jobTarget.ID $job.ID }}
+                                            {{ if ge $job.Score 70.0 }}
+                                            <div class="text-primary fw-bold">
+                                            {{ else if ge $job.Score 50.0 }}
+                                            <div class="text-success fw-bold">
+                                            {{ else if ge $job.Score 40.0 }}
+                                            <div>
+                                            {{ else }}
+                                            <div class="text-danger">
+                                            {{ end }}
+                                                {{ fn $job.Score }}
+                                            </div>
+                                            <div>/ {{ fn $job.Kills }}</div>
+                                        {{ end }}
+                                    {{ end }}
                                 {{ end }}
                             </td>
                             {{ end }}
@@ -171,9 +186,9 @@
                                     <th scope="col">이름</th>
                                     <th scope="col" class="text-center">쿨타임</th>
                                     <th scope="col" class="text-center">사용 수 (평균)</th>
-                                    <th scope="col" class="text-center">쿨타임 % (평균)</th>
+                                    <th scope="col" class="text-center">기술 사용 (평균)</th>
                                     <th scope="col" class="text-center">사용 수 (중간값)</th>
-                                    <th scope="col" class="text-center">쿨타임 % (중간값)</th>
+                                    <th scope="col" class="text-center">기술 사용 (중간값)</th>
                                 </tr>
                             </thead>
                             <tbody>

@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	csReport = cache.NewStorage("./cached/report", 0)
-	csEvents = cache.NewStorage("./cached/events", 0)
+	csReport = cache.NewStorage("./_cachedata/report", 0)
+	csEvents = cache.NewStorage("./_cachedata/events", 0)
 )
 
 func cacheReport(reportId string, fightIds string, r interface{}, saveMode bool) bool {

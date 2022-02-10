@@ -1,19 +1,6 @@
-let ENCOUNTER_NAME = {
-    73: "어둠의 구름",
-    74: "그림자의 왕",
-    75: "페이트 브레이커",
-    76: "에덴의 약속",
-    77: "어둠의 무녀",
-    1050: "절 알렉산더 토벌전",
-    1048: "절 알테마 웨폰 파괴작전",
-    1047: "절 바하무트 토벌전",
-};
-
 let ENCOUNTER_REQUEST_DATA = {
     'eden': [ 73, 74, 75, 76, 77, ],
-    'tea':  [ 1050, ],
-    'uwu':  [ 1048, ],
-    'ucob': [ 1047, ],
+    'ultimate':  [ 1047, 1048, 1050 ],
 };
 
 let ALL_JOBS = [
@@ -38,6 +25,8 @@ document.addEventListener(
         searchButton.addEventListener(
             'click',
             function(e) {
+                content.innerHTML = "";
+
                 grecaptcha.ready(
                     function() {
                         grecaptcha.execute(

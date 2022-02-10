@@ -31,9 +31,10 @@ func (inst *analysisInstance) updateEvents() bool {
 		FightID  int
 		SourceID int
 
-		Casts  TodoFightEvent
-		Buffs  TodoFightEvent
-		Deaths TodoFightEvent
+		Casts        TodoFightEvent
+		Buffs        TodoFightEvent
+		Deaths       TodoFightEvent
+		NeedsAttacks bool
 
 		done    bool
 		retries int
@@ -62,10 +63,6 @@ func (inst *analysisInstance) updateEvents() bool {
 				}
 			}
 
-			if fight.StartTime == 0 {
-				log.Println("fffffffffffff")
-			}
-
 			td := &TodoFight{
 				Hash:     hash,
 				ReportID: report.ReportID,
@@ -83,6 +80,7 @@ func (inst *analysisInstance) updateEvents() bool {
 					StartTime: fight.StartTime,
 					EndTime:   fight.EndTime,
 				},
+				NeedsAttacks:   fight.Job == "Paladin", // 충의 계산용...
 				fightStartTime: fight.StartTime,
 			}
 			todoList = append(todoList, td)
@@ -103,9 +101,16 @@ func (inst *analysisInstance) updateEvents() bool {
 	}
 
 	type RespReportData struct {
-		Casts  *respReportEventData `json:"casts"`
-		Buffs  *respReportEventData `json:"buffs"`
-		Deaths *respReportEventData `json:"deaths"`
+		Casts   *respReportEventData `json:"casts"`
+		Buffs   *respReportEventData `json:"buffs"`
+		Deaths  *respReportEventData `json:"deaths"`
+		Attacks *struct {
+			Data struct {
+				Entries []struct {
+					Uses int `json:"uses"`
+				} `json:"entries"`
+			} `json:"data"`
+		} `json:"attacks"`
 	}
 
 	var worked int32
@@ -246,8 +251,16 @@ func (inst *analysisInstance) updateEvents() bool {
 			}
 		}
 
+		if resp.Attacks != nil {
+			td.NeedsAttacks = false
+
+			for _, entries := range resp.Attacks.Data.Entries {
+				fightInfo.AutoAttacks += entries.Uses
+			}
+		}
+
 		if !td.done {
-			if td.Casts.Done && td.Buffs.Done && td.Deaths.Done {
+			if td.Casts.Done && td.Buffs.Done && td.Deaths.Done && !td.NeedsAttacks {
 				td.done = true
 				fightInfo.DoneEvents = true
 				atomic.AddInt32(&worked, 1)
