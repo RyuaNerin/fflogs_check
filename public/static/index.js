@@ -24,29 +24,10 @@ let ALL_JOBS = [
     "BlackMage", "Summoner", "RedMage",
 ];
 
-function buildHtml(data) {
-    let html = "";
-    
-    html += `<div class="accordion" id="accordion">`;
-    for (let index = 0; index < data.data.length; index++) {
-        const element = array.data[index];
-
-        html += `
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="heading${index}">
-                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${index}" aria-expanded="true" aria-controls="collapse${index}">
-                    ${ENCOUNTER_NAME[element.encounter.encounter]}
-                </button>
-            </h2>
-            <div id="collapse${index}" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordion">
-            <div class="accordion-body">`;
-
-        html += `
-            </div>
-        </div>`;
-    }
-    html += `</div>`
-}
+let SPINNER = `
+<div class="spinner-border text-primary spinner-border-sm me-3" role="status">
+    <span class="visually-hidden">Loading...</span>
+</div>`;
 
 document.addEventListener(
     'DOMContentLoaded',
@@ -123,13 +104,13 @@ document.addEventListener(
                                             socket.send(JSON.stringify(requestData));
                                             break;
                                         case "waiting":
-                                            content.innerText = `대기열 ${resp.data} 번 째`;
+                                            content.innerHTML = `${SPINNER} 대기열 ${resp.data} 번 째`;
                                             break;
                                         case "start":
-                                            content.innerText = `분석 시작`;
+                                            content.innerHTML = `${SPINNER} 분석 시작`;
                                             break;
                                         case "progress":
-                                            content.innerText = resp.data;
+                                            content.innerHTML = `${SPINNER} ${resp.data}`;
                                             break;
                                         case "error":
                                             content.innerText = "오류 발생";

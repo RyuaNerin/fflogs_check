@@ -1,47 +1,86 @@
 package analysis
 
-type Statistics struct {
+const (
+	StatisticStateNormal   = "normal"
+	StatisticStateHidden   = "hidden"
+	StatisticStateNotFound = "notfound"
+)
+
+type Statistic struct {
+	UpdatedAt string `json:"updated_at"`
+
+	State string `json:"state"`
+
 	CharName   string `json:"char_name"`
 	CharServer string `json:"char_server"`
 	CharRegion string `json:"char_region"`
 
-	Encounter []*StatisticEncounter `json:"data"`
-}
+	Jobs    []*StatisticJob          `json:"jobs"`
+	jobsMap map[string]*StatisticJob `json:"-"`
 
-type StatisticEncounter struct {
-	Encounter StatisticEncounterInfo   `json:"encounter"`
-	Jobs      []*StatisticJob          `json:"data"`
-	jobsMap   map[string]*StatisticJob `json:"-"`
-}
-
-type StatisticEncounterInfo struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
+	Encounters    []*StatisticEncounter       `json:"encounters"`
+	encountersMap map[int]*StatisticEncounter `json:"-"`
 }
 
 type StatisticJob struct {
+	ID  int    `json:"id"`
 	Job string `json:"job"`
 
-	TotalKills int `json:"kills"` // 전체 킬 수
+	Kills      int     `json:"kills"`
+	Score      float32 `json:"score"`
+	scoreSum   float64 `json:"-"`
+	scoreCount int     `json:"-"`
+}
 
-	Data    []*StatisticSkill       `json:"data"`
-	dataMap map[int]*StatisticSkill `json:"-"`
+type StatisticEncounter struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+
+	Kills      int     `json:"kills"`
+	Score      float32 `json:"score"`
+	scoreSum   float64 `json:"-"`
+	scoreCount int     `json:"-"`
+
+	Jobs    []*StatisticEncounterJob          `json:"jobs"`
+	jobsMap map[string]*StatisticEncounterJob `json:"-"`
+}
+
+type StatisticEncounterJob struct {
+	ID  int    `json:"id"`
+	Job string `json:"job"`
+
+	Kills      int     `json:"kills"`
+	Score      float32 `json:"score"`
+	scoreSum   float64 `json:"-"`
+	scoreCount int     `json:"-"`
+
+	Skills    []*StatisticSkill       `json:"skills"`
+	skillsMap map[int]*StatisticSkill `json:"-"`
 }
 
 type StatisticSkill struct {
 	Info BuffSkillInfo `json:"info"`
 
-	Usage    BuffStatistics `json:"usage"`    // 사용 횟수
-	Cooldown BuffStatistics `json:"cooldown"` //쿨타임이였던 시간
+	Usage    StatisticSkillUsage    `json:"usage"`    // 사용 횟수
+	Cooldown StatisticSkillCooldown `json:"cooldown"` //쿨타임이였던 시간
 }
 type BuffSkillInfo struct {
 	ID       int    `json:"id"`
 	Name     string `json:"name"`
 	Cooldown int    `json:"cooldown"`
 	Icon     string `json:"icon"`
+
+	WithDowntime    bool `json:"downtime"`
+	ContainsInScore bool `json:"contains_in_score"`
 }
-type BuffStatistics struct {
-	data []float64 `json:"-"`
-	Avg  float64   `json:"avg"`
-	Med  float64   `json:"med"`
+type StatisticSkillUsage struct {
+	data []int   `json:"-"`
+	Avg  float32 `json:"avg"`
+	Med  int     `json:"med"`
+}
+
+type StatisticSkillCooldown struct {
+	data []float32 `json:"-"`
+	Avg  float32   `json:"avg"`
+	Med  float32   `json:"med"`
 }

@@ -2,6 +2,7 @@ package analysispool
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"time"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	"github.com/gorilla/websocket"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -26,6 +28,7 @@ func Do(ctx context.Context, ws *websocket.Conn) {
 	err := ws.WriteMessage(websocket.TextMessage, eventReady)
 	if err != nil {
 		sentry.CaptureException(err)
+		fmt.Printf("%+v\n", errors.WithStack(err))
 		return
 	}
 
@@ -33,25 +36,24 @@ func Do(ctx context.Context, ws *websocket.Conn) {
 		ws:        ws,
 		ctx:       ctx,
 		ctxCancel: ctxCancel,
-		chanResp:  make(chan *analysis.Statistics),
+		chanResp:  make(chan *analysis.Statistic),
 	}
 
 	err = ws.ReadJSON(&q.opt)
 	if err != nil {
 		sentry.CaptureException(err)
+		fmt.Printf("%+v\n", errors.WithStack(err))
 		return
 	}
 	go func() {
 		for {
 			_, r, err := ws.NextReader()
 			if err != nil {
-				sentry.CaptureException(err)
 				return
 			}
 
 			_, err = io.Copy(io.Discard, r)
 			if err != nil && err != io.EOF {
-				sentry.CaptureException(err)
 				return
 			}
 		}
@@ -66,7 +68,7 @@ func Do(ctx context.Context, ws *websocket.Conn) {
 
 	h := getOptionHash(&q.opt)
 
-	var stat *analysis.Statistics
+	var stat *analysis.Statistic
 	if csStatistics.Load(h, &stat) {
 		q.Succ(stat)
 	} else {
@@ -80,6 +82,7 @@ func Do(ctx context.Context, ws *websocket.Conn) {
 					if err != nil {
 						if err != websocket.ErrCloseSent {
 							sentry.CaptureException(err)
+							fmt.Printf("%+v\n", errors.WithStack(err))
 						}
 						ctxCancel()
 						return
@@ -117,6 +120,7 @@ func Do(ctx context.Context, ws *websocket.Conn) {
 	err = ws.WriteMessage(websocket.CloseMessage, websockEmptyClosure)
 	if err != nil && err != websocket.ErrCloseSent {
 		sentry.CaptureException(err)
+		fmt.Printf("%+v\n", errors.WithStack(err))
 	}
 
 	ws.Close()

@@ -1,0 +1,225 @@
+<h1>{{ $.CharName }}@{{ $.CharServer }} ({{ $.CharRegion }})</h1>
+
+<div class="mb-3">{{ $.UpdatedAt }} 기준</div>
+
+{{ if eq $.State "hidden" }}
+<div class="alert alert-danger" role="alert">
+    비공개 캐릭터입니다.
+</div>
+{{ else if eq $.State "notfound" }}
+<div class="alert alert-danger" role="alert">
+    캐릭터를 찾을 수 없습니다.
+</div>
+{{ else }}
+<div id="accordion" class="accordion">
+    <div class="accordion-item">
+        <h2
+            id="headingJobs"
+            class="accordion-header"
+        >
+            <button
+                class="accordion-button collapsed align-middle"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#collapseJobs"
+                aria-expanded="false"
+                aria-controls="collapseJobs"
+            >직업/보스 별 완벽도</button>
+        </h2>
+        <div
+            id="collapseJobs"
+            class="accordion-collapse collapse"
+            aria-labelledby="headingJobs"
+            data-bs-parent="#accordion"
+        >
+            <div class="accordion-body">
+                <table class="table table-sm table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th scope="col">보스 명</th>
+    
+                            {{ range $i, $job := $.Jobs }}
+                            {{ if eq $job.ID 0 }}
+                            <th scope="col" class="text-center">종합</th>
+                            {{ else }}
+                            <th scope="col" class="text-center"><img class="icon32 job32 {{ $job.Job }}"></th>
+                            {{ end }}
+                            {{ end }}
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {{/* ================================================== */}}
+                        {{/* 종합 영역 */}}
+                        <tr>
+                            <th scope="row">종합</th>
+                            {{ range $i, $job := $.Jobs }}
+                            <td class="text-center">
+                                {{ if ge $job.Score 70.0 }}
+                                <div class="text-primary fw-bold">
+                                {{ else if ge $job.Score 50.0 }}
+                                <div class="text-success fw-bold">
+                                {{ else if ge $job.Score 30.0 }}
+                                <div>
+                                {{ else }}
+                                <div class="text-danger">
+                                {{ end }}
+                                    {{ fn $job.Score }}
+                                </div>
+                                <div>{{ fn $job.Kills }}</div>
+                            </td>
+                            {{ end }}
+                        </tr>
+                        
+                        {{/* ================================================== */}}
+                        {{/* 보스별 영역 */}}
+                        {{ range $i, $enc := $.Encounters }}
+                        <tr>
+                            <th scope="row">{{ $enc.Name }}</th>
+                            {{ range $ii, $job := $.Jobs }}
+                            <td class="text-center">
+                                {{ range $iii, $job2 := $enc.Jobs }}
+                                {{ if eq $job.ID $job2.ID }}
+                                {{ if ge $job2.Score 70.0 }}
+                                <div class="text-primary fw-bold">
+                                {{ else if ge $job2.Score 50.0 }}
+                                <div class="text-success fw-bold">
+                                {{ else if ge $job2.Score 30.0 }}
+                                <div>
+                                {{ else }}
+                                <div class="text-danger">
+                                {{ end }}
+                                    {{ fn $job2.Score }}
+                                </div>
+                                <div>{{ fn $job2.Kills }}</div>                                
+                                {{ end }}
+                                {{ end }}
+                            </td>
+                            {{ end }}
+                        </tr>
+                        {{ end }}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {{ range $i, $enc := $.Encounters }}
+    <div class="accordion-item">
+        <h2
+            id="heading{{ $enc.ID }}"
+            class="accordion-header"
+        >
+            <button
+                class="accordion-button collapsed align-middle"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#collapse{{ $enc.ID }}"
+                aria-expanded="false"
+                aria-controls="collapse{{ $enc.ID }}"
+            >{{ $enc.Name }}<span class="text-danger ms-2"><b>{{ fn $enc.Kills }}</b></span></button>
+        </h2>
+
+        <div
+            id="collapse{{ $enc.ID }}"
+            class="accordion-collapse collapse"
+            aria-labelledby="heading{{ $enc.ID }}"
+            data-bs-parent="#accordion"
+        >
+            <div class="accordion-body">
+                <ul
+                    class="nav nav-tabs mb-3"
+                    id="tab-{{ $enc.ID }}"
+                    role="tablist"
+                >
+                    {{ range $ii, $encJob := $enc.Jobs }}
+                    <li
+                        class="nav-item"
+                        role="presentation"
+                    >
+                        <button
+                                {{ if eq $ii 0 }}
+                                class="nav-link align-middle active"
+                                {{ else }}
+                                class="nav-link align-middle"
+                                {{ end }}
+                                id="tab-{{ $enc.ID }}-{{ $encJob.ID }}-tab"
+                                data-bs-toggle="tab"
+                                data-bs-target="#tab-{{ $enc.ID }}-{{ $encJob.ID }}"
+                                type="button"
+                                role="tab"
+                                aria-controls="tab-{{ $enc.ID }}-{{ $encJob.ID }}"
+                                aria-selected="true"
+                        ><img class="icon32 job32 {{ $encJob.Job }}"><span class="text-danger ms-2"><b>{{ fn $encJob.Kills }}</b></span></button>
+                    </li>
+                    {{ end }}
+                </ul>
+
+                <div class="tab-content" id="tab-{{ $enc.ID }}-content">
+                    {{ range $ii, $encJob := $enc.Jobs }}
+                    <div id="tab-{{ $enc.ID }}-{{ $encJob.ID }}"
+                         {{ if eq $ii 0 }}
+                         class="tab-pane fade show active"
+                         {{ else }}
+                         class="tab-pane fade"
+                         {{ end }}
+                         role="tabpanel"
+                         aria-labelledby="tab-{{ $enc.ID }}-{{ $encJob.ID }}-tab">
+                        <table class="table table-sm table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th scope="col">이름</th>
+                                    <th scope="col" class="text-center">쿨타임</th>
+                                    <th scope="col" class="text-center">사용 수 (평균)</th>
+                                    <th scope="col" class="text-center">쿨타임 % (평균)</th>
+                                    <th scope="col" class="text-center">사용 수 (중간값)</th>
+                                    <th scope="col" class="text-center">쿨타임 % (중간값)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{ range $iii, $encJobSkill := $encJob.Skills }}
+                                <tr>
+                                    {{ if $encJobSkill.Info.ContainsInScore}}
+                                    <th scope="row" class="text-primary">
+                                    {{ else }}
+                                    <th scope="row">
+                                    {{ end }}
+                                        <img src="https://assets.rpglogs.com/img/ff/abilities/{{ $encJobSkill.Info.Icon }}" class="icon32"> {{ $encJobSkill.Info.Name }}
+                                    </th>
+                                    
+                                    {{ if $encJobSkill.Info.WithDowntime }}
+                                    <td class="text-center">{{ fn $encJobSkill.Info.Cooldown }}</td>
+                                    {{ else }}
+                                    <td class="text-center"></td>
+                                    {{ end }}
+
+                                    <td class="text-center">{{ fn $encJobSkill.Usage.Avg }}</td>
+
+                                    {{ if $encJobSkill.Info.WithDowntime }}
+                                    <td class="text-center">{{ fn $encJobSkill.Cooldown.Avg }} %</td>
+                                    {{ else }}
+                                    <td class="text-center"></td>
+                                    {{ end }}
+
+                                    <td class="text-center">{{ fn $encJobSkill.Usage.Med }}</td>
+
+                                    {{ if $encJobSkill.Info.WithDowntime }}
+                                    <td class="text-center">{{ fn $encJobSkill.Cooldown.Med }} %</td>
+                                    {{ else }}
+                                    <td class="text-center"></td>
+                                    {{ end }}
+                                </tr>
+                                {{ end }}
+                            </tbody>
+                        </table>
+                    </div>
+                    {{ end }}
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+    {{ end }}
+</div>
+{{end}}

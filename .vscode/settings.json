@@ -1,12 +1,6 @@
 {
     "liveServer.settings.ignoreFiles": [
-        ".vscode/**",
-        "**/*.scss",
-        "**/*.sass",
-        "**/*.ts",
-        "cached-json/**",
-        "**/*.go",
-        "**/*.exe",
-        "cached/**",
-    ]
+        "**/*"
+    ],
+    "liveServer.settings.fullReload": false,
 }

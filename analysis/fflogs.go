@@ -17,6 +17,7 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -35,12 +36,14 @@ type fightKey struct {
 type analysisInstance struct {
 	ctx context.Context
 
-	CharName            string
-	CharServer          string
-	CharRegion          string
-	AdditionalPartition []int
-	CharJobs            map[string]bool
-	EncounterIDs        []int
+	InpCharName            string
+	InpCharServer          string
+	InpCharRegion          string
+	InpAdditionalPartition []int
+	InpCharJobs            map[string]bool
+	InpEncounterIDs        []int
+
+	charState string
 
 	Reports map[string]*analysisReport
 	Fights  map[fightKey]*analysisFight
@@ -137,6 +140,7 @@ func (inst *analysisInstance) callGraphQl(ctx context.Context, tmpl *template.Te
 	err := tmpl.Execute(sb, tmplData)
 	if err != nil {
 		sentry.CaptureException(err)
+		fmt.Printf("%+v\n", errors.WithStack(err))
 		return err
 	}
 
@@ -153,6 +157,7 @@ func (inst *analysisInstance) callGraphQl(ctx context.Context, tmpl *template.Te
 	err = jsoniter.NewEncoder(buf).Encode(&queryData)
 	if err != nil {
 		sentry.CaptureException(err)
+		fmt.Printf("%+v\n", errors.WithStack(err))
 		return err
 	}
 
@@ -175,6 +180,7 @@ func (inst *analysisInstance) callGraphQl(ctx context.Context, tmpl *template.Te
 	if err != nil {
 		if !share.IsContextClosedError(err) {
 			sentry.CaptureException(err)
+			fmt.Printf("%+v\n", errors.WithStack(err))
 		}
 		return err
 	}
@@ -187,6 +193,7 @@ func (inst *analysisInstance) callGraphQl(ctx context.Context, tmpl *template.Te
 	err = jsoniter.NewDecoder(resp.Body).Decode(&respData)
 	if err != io.EOF && err != nil {
 		sentry.CaptureException(err)
+		fmt.Printf("%+v\n", errors.WithStack(err))
 		return err
 	}
 

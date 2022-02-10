@@ -17,7 +17,7 @@ import (
 )
 
 func (inst *analysisInstance) updateEvents() bool {
-	log.Printf("updateEvents %s@%s\n", inst.CharName, inst.CharServer)
+	log.Printf("updateEvents %s@%s\n", inst.InpCharName, inst.InpCharServer)
 	type TodoFightEvent struct {
 		Done      bool
 		StartTime int
@@ -260,7 +260,7 @@ func (inst *analysisInstance) updateEvents() bool {
 	}
 	progress := func() {
 		p := progressPercent()
-		log.Printf("updateEvents %s@%s (%.2f %%)\n", inst.CharName, inst.CharServer, progressPercent())
+		log.Printf("updateEvents %s@%s (%.2f %%)\n", inst.InpCharName, inst.InpCharServer, progressPercent())
 		inst.progress("[3 / 3] 전투 정보 분석 중... %.2f %%", p)
 	}
 
@@ -361,7 +361,7 @@ func (inst *analysisInstance) updateEvents() bool {
 	for _, todo := range todoList {
 		if !todo.done {
 			sentry.CaptureException(errors.Errorf(
-				"Report: %s (fight: %d) / %s@%s / retries : %d", todo.ReportID, todo.FightID, inst.CharName, inst.CharServer, todo.retries,
+				"Report: %s (fight: %d) / %s@%s / retries : %d", todo.ReportID, todo.FightID, inst.InpCharName, inst.InpCharServer, todo.retries,
 			))
 			return false
 		}

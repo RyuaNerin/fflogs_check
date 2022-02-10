@@ -12,6 +12,7 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 )
 
 type Client struct {
@@ -60,6 +61,7 @@ func (c *Client) NewRequest(ctx context.Context, method string, urlStr string, b
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			sentry.CaptureException(err)
+			fmt.Printf("%+v\n", errors.WithStack(err))
 			return nil, false
 		}
 		defer resp.Body.Close()
@@ -72,6 +74,7 @@ func (c *Client) NewRequest(ctx context.Context, method string, urlStr string, b
 		err = jsoniter.NewDecoder(resp.Body).Decode(&token)
 		if err != nil {
 			sentry.CaptureException(err)
+			fmt.Printf("%+v\n", errors.WithStack(err))
 			return nil, false
 		}
 		if token.Error != "" {
@@ -85,6 +88,7 @@ func (c *Client) NewRequest(ctx context.Context, method string, urlStr string, b
 	req, err := http.NewRequest(method, urlStr, body)
 	if err != nil {
 		sentry.CaptureException(err)
+		fmt.Printf("%+v\n", errors.WithStack(err))
 		return nil, false
 	}
 	req.Header = http.Header{

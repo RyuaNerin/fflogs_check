@@ -1,15 +1,17 @@
 package analysis
 
 import (
+	"fmt"
 	"log"
 	"sort"
 	"strconv"
 
 	"github.com/getsentry/sentry-go"
+	"github.com/pkg/errors"
 )
 
 func (inst *analysisInstance) updateReports() bool {
-	log.Printf("updateReports %s@%s\n", inst.CharName, inst.CharServer)
+	log.Printf("updateReports %s@%s\n", inst.InpCharName, inst.InpCharServer)
 	inst.progress("[1 / 3] 전투 기록 가져오는 중...")
 
 	var resp struct {
@@ -19,7 +21,10 @@ func (inst *analysisInstance) updateReports() bool {
 				Name string `json:"name"`
 			} `json:"worldData"`
 			CharacterData struct {
-				Character map[string]struct {
+				CharHidden *struct {
+					Hidden bool `json:"hidden"`
+				} `json:"char_hidden"`
+				CharEncounter map[string]struct {
 					Ranks []struct {
 						Spec   string `json:"spec"`
 						Report struct {
@@ -27,7 +32,7 @@ func (inst *analysisInstance) updateReports() bool {
 							FightID int    `json:"fightID"`
 						} `json:"report"`
 					} `json:"ranks"`
-				} `json:"character"`
+				} `json:"char_encounter"`
 			} `json:"characterData"`
 		} `json:"data"`
 	}
@@ -35,14 +40,27 @@ func (inst *analysisInstance) updateReports() bool {
 	err := inst.try(func() error { return inst.callGraphQl(inst.ctx, tmplEncounterRankings, inst, &resp) })
 	if err != nil {
 		sentry.CaptureException(err)
+		fmt.Printf("%+v\n", errors.WithStack(err))
 		return false
 	}
+
+	if resp.Data.CharacterData.CharHidden == nil {
+		inst.charState = StatisticStateNotFound
+		return true
+	}
+
+	if resp.Data.CharacterData.CharHidden.Hidden {
+		inst.charState = StatisticStateHidden
+		return true
+	}
+
+	inst.charState = StatisticStateNormal
 
 	for _, encData := range resp.Data.WorldData {
 		inst.encounterNames[encData.ID] = encData.Name
 	}
 
-	for key, value := range resp.Data.CharacterData.Character {
+	for key, value := range resp.Data.CharacterData.CharEncounter {
 		encStr := reEnc.FindStringSubmatch(key)
 		if len(encStr) != 2 {
 			continue

@@ -3,6 +3,7 @@ package analysispool
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"log"
 	"sync"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/getsentry/sentry-go"
 	"github.com/gorilla/websocket"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -27,7 +29,7 @@ type queueData struct {
 	ctx       context.Context
 	ctxCancel func()
 
-	chanResp chan *analysis.Statistics
+	chanResp chan *analysis.Statistic
 
 	msgLock sync.Mutex
 }
@@ -97,6 +99,7 @@ func (q *queueData) MessageJson(resp interface{}) error {
 	err := jsoniter.NewEncoder(buf).Encode(&resp)
 	if err != nil {
 		sentry.CaptureException(err)
+		fmt.Printf("%+v\n", errors.WithStack(err))
 		return err
 	}
 
@@ -122,6 +125,7 @@ func (q *queueData) Reorder(order int) {
 	err := q.MessageJson(&resp)
 	if err != nil {
 		sentry.CaptureException(err)
+		fmt.Printf("%+v\n", errors.WithStack(err))
 		q.ctxCancel()
 	}
 }
@@ -131,6 +135,7 @@ func (q *queueData) Start() {
 	if err != nil {
 		if err != websocket.ErrCloseSent {
 			sentry.CaptureException(err)
+			fmt.Printf("%+v\n", errors.WithStack(err))
 		}
 		q.ctxCancel()
 	}
@@ -148,6 +153,7 @@ func (q *queueData) Progress(s string) {
 	err := q.MessageJson(&resp)
 	if err != nil {
 		sentry.CaptureException(err)
+		fmt.Printf("%+v\n", errors.WithStack(err))
 		q.ctxCancel()
 	}
 }
@@ -157,18 +163,21 @@ func (q *queueData) Error() {
 	if err != nil {
 		if err != websocket.ErrCloseSent {
 			sentry.CaptureException(err)
+			fmt.Printf("%+v\n", errors.WithStack(err))
 		}
 		q.ctxCancel()
 	}
 }
 
-func (q *queueData) Succ(r *analysis.Statistics) {
+func (q *queueData) Succ(r *analysis.Statistic) {
 	sb := tmplAnalysisPool.Get().(*bytes.Buffer)
 	defer tmplAnalysisPool.Put(sb)
+	sb.Reset()
 
 	err := tmplAnalysis.Execute(sb, r)
 	if err != nil {
 		sentry.CaptureException(err)
+		fmt.Printf("%+v\n", errors.WithStack(err))
 
 		q.Error()
 		return
@@ -185,6 +194,7 @@ func (q *queueData) Succ(r *analysis.Statistics) {
 	err = q.MessageJson(resp)
 	if err != nil {
 		sentry.CaptureException(err)
+		fmt.Printf("%+v\n", errors.WithStack(err))
 
 		q.ctxCancel()
 		return

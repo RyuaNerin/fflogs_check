@@ -32,7 +32,7 @@ type AnalyzeOptions struct {
 	Jobs                 []string `json:"jobs"`
 }
 
-func Analyze(ctx context.Context, progress func(p string), opt *AnalyzeOptions) (stat *Statistics, ok bool) {
+func Analyze(ctx context.Context, progress func(p string), opt *AnalyzeOptions) (stat *Statistic, ok bool) {
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -41,11 +41,11 @@ func Analyze(ctx context.Context, progress func(p string), opt *AnalyzeOptions) 
 	inst := analysisInstance{
 		ctx: ctx,
 
-		CharName:     opt.CharName,
-		CharServer:   opt.CharServer,
-		CharRegion:   opt.CharRegion,
-		CharJobs:     make(map[string]bool, len(opt.Jobs)),
-		EncounterIDs: make([]int, len(opt.Encouters)),
+		InpCharName:     opt.CharName,
+		InpCharServer:   opt.CharServer,
+		InpCharRegion:   opt.CharRegion,
+		InpCharJobs:     make(map[string]bool, len(opt.Jobs)),
+		InpEncounterIDs: make([]int, len(opt.Encouters)),
 
 		Reports: make(map[string]*analysisReport),
 		Fights:  make(map[fightKey]*analysisFight),
@@ -62,16 +62,16 @@ func Analyze(ctx context.Context, progress func(p string), opt *AnalyzeOptions) 
 		inst.skillSets = ffxiv.Global
 	}
 
-	copy(inst.EncounterIDs, opt.Encouters)
+	copy(inst.InpEncounterIDs, opt.Encouters)
 
 	for _, job := range opt.Jobs {
 		_, ok := ffxiv.JobOrder[job]
 		if ok {
-			inst.CharJobs[job] = true
+			inst.InpCharJobs[job] = true
 		}
 	}
 
-	inst.AdditionalPartition = append(inst.AdditionalPartition, opt.AdditionalPartitions...)
+	inst.InpAdditionalPartition = append(inst.InpAdditionalPartition, opt.AdditionalPartitions...)
 
 	chanDone := make(chan struct{}, 1)
 	go func() {
@@ -88,13 +88,17 @@ func Analyze(ctx context.Context, progress func(p string), opt *AnalyzeOptions) 
 		}
 	}()
 
-	if inst.updateReports() {
-		if inst.updateFights() {
-			if inst.updateEvents() {
-				stat = inst.buildReport()
-				ok = true
-			}
+	succ := inst.updateReports()
+	if succ && inst.charState == StatisticStateNormal {
+		succ = inst.updateFights()
+		if succ {
+			succ = inst.updateEvents()
 		}
+	}
+
+	if succ {
+		stat = inst.buildReport()
+		ok = true
 	}
 
 	ctxCancel()

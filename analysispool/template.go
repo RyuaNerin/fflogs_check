@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"strconv"
 	"sync"
 )
 
@@ -12,10 +13,20 @@ var (
 		template.New("analysis.tmpl.htm").
 			Funcs(
 				template.FuncMap{
-					"fn": func(value float64) string { return fmt.Sprintf("%.2f", value) },
+					"fn": func(value interface{}) string {
+						switch e := value.(type) {
+						case float32:
+							return fmt.Sprintf("%.2f", e)
+						case float64:
+							return fmt.Sprintf("%.2f", e)
+						case int:
+							return strconv.Itoa(e)
+						}
+						return ""
+					},
 				},
 			).
-			ParseFiles("./analysis.tmpl.htm"),
+			ParseFiles("analysispool/resources/analysis.tmpl.htm"),
 	)
 
 	tmplAnalysisPool = sync.Pool{

@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"hash"
 	"hash/fnv"
+	"io"
+	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -14,8 +17,50 @@ import (
 )
 
 var (
-	csStatistics = cache.NewStorage("./cached/statistics", time.Second*10)
+	csStatistics      = cache.NewStorage("./cached/statistics", time.Hour)
+	analysisFilesHash uint32
 )
+
+func init() {
+	h := fnv.New32a()
+
+	read := func(path string) {
+		fs, err := os.Open(path)
+		if err != nil {
+			panic(err)
+		}
+
+		_, err = io.Copy(h, fs)
+		if err != nil && err != io.EOF {
+			panic(err)
+		}
+	}
+
+	var walk func(dir string)
+
+	walk = func(dir string) {
+		fiList, err := os.ReadDir(dir)
+		if err != nil {
+			panic(err)
+		}
+
+		for _, fi := range fiList {
+			path := filepath.Join(dir, fi.Name())
+			fmt.Fprint(h, path)
+
+			if fi.IsDir() {
+				walk(path)
+			} else {
+				read(path)
+			}
+		}
+	}
+
+	walk("./analysis")
+	walk("./ffxiv")
+
+	analysisFilesHash = h.Sum32()
+}
 
 func checkOptionValidation(ao *analysis.AnalyzeOptions) bool {
 	ao.CharName = strings.TrimSpace(ao.CharName)
@@ -42,6 +87,13 @@ func checkOptionValidation(ao *analysis.AnalyzeOptions) bool {
 }
 
 func getOptionHash(ao *analysis.AnalyzeOptions) hash.Hash {
+	var ss ffxiv.SkillSets
+	if ao.CharRegion == "kr" {
+		ss = ffxiv.Korea
+	} else {
+		ss = ffxiv.Global
+	}
+
 	sort.Ints(ao.Encouters)
 	sort.Ints(ao.AdditionalPartitions)
 	sort.Strings(ao.Jobs)
@@ -49,13 +101,17 @@ func getOptionHash(ao *analysis.AnalyzeOptions) hash.Hash {
 	h := fnv.New128a()
 	fmt.Fprint(
 		h,
-		strings.ToLower(ao.CharName), "|||",
-		strings.ToLower(ao.CharServer), "|||",
-		strings.ToLower(ao.CharRegion), "|||",
-		ao.Encouters, "|||",
-		ao.AdditionalPartitions, "|||",
-		ao.Jobs, "|||",
+		analysisFilesHash, "|",
+		ss.Hash, "|",
+		strings.ToLower(ao.CharName), "|",
+		strings.ToLower(ao.CharServer), "|",
+		strings.ToLower(ao.CharRegion), "|",
+		ao.Encouters, "|",
+		ao.AdditionalPartitions, "|",
 	)
+	for _, jobs := range ao.Jobs {
+		fmt.Fprintf(h, strings.ToLower(jobs), "|")
+	}
 
 	return h
 }

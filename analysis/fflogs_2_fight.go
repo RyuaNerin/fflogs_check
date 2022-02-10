@@ -17,7 +17,7 @@ import (
 )
 
 func (inst *analysisInstance) updateFights() bool {
-	log.Printf("updateFights %s@%s\n", inst.CharName, inst.CharServer)
+	log.Printf("updateFights %s@%s\n", inst.InpCharName, inst.InpCharServer)
 	type TodoData struct {
 		Hash     string
 		ReportID string
@@ -111,7 +111,7 @@ func (inst *analysisInstance) updateFights() bool {
 			sourceId := 0
 			for _, respFightPlayerID := range respFight.FriendlyPlayers {
 				for _, respActor := range resp.MasterData.Actors {
-					if respFightPlayerID == respActor.ID && respActor.Name == inst.CharName {
+					if respFightPlayerID == respActor.ID && respActor.Name == inst.InpCharName {
 						sourceId = respFightPlayerID
 					}
 				}
@@ -164,7 +164,7 @@ func (inst *analysisInstance) updateFights() bool {
 	}
 	progress := func() {
 		p := progressPercent()
-		log.Printf("updateFights %s@%s (%.2f %%)\n", inst.CharName, inst.CharServer, p)
+		log.Printf("updateFights %s@%s (%.2f %%)\n", inst.InpCharName, inst.InpCharServer, p)
 		inst.progress("[2 / 3] 전투 정보 가져오는 중... %.2f %%", p)
 	}
 
@@ -206,6 +206,7 @@ func (inst *analysisInstance) updateFights() bool {
 			err := inst.try(func() error { return inst.callGraphQl(ctx, tmplReportSummary, query, &resp) })
 			if err != nil {
 				sentry.CaptureException(err)
+				fmt.Printf("%+v\n", errors.WithStack(err))
 				return err
 			}
 
@@ -255,7 +256,7 @@ func (inst *analysisInstance) updateFights() bool {
 	for _, todo := range todoList {
 		if !todo.done {
 			sentry.CaptureException(errors.Errorf(
-				"Report: %s (%s) / %s@%s / retries : %d", todo.ReportID, todo.FightIDs, inst.CharName, inst.CharServer, todo.retries,
+				"Report: %s (%s) / %s@%s / retries : %d", todo.ReportID, todo.FightIDs, inst.InpCharName, inst.InpCharServer, todo.retries,
 			))
 			return false
 		}

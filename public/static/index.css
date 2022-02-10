@@ -11,7 +11,7 @@
     width: 32px;
     height: 32px;
     --size: 32;
-    float: left;
+    /* float: left; */
     margin-right: 6px;
     margin-left: 2px;
 }
