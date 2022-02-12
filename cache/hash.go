@@ -7,42 +7,41 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+
+	"github.com/getsentry/sentry-go"
 )
 
 func cleanUpWithHash(dir string, dirForHash ...string) {
-	newHash := hashDir(dirForHash...)
-	var oldHash uint32
-
 	b := make([]byte, 4)
 
 	hashFile := filepath.Join(dir, "hash")
-	fs, err := os.OpenFile(hashFile, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0400)
-	if err != nil {
-		if !os.IsNotExist(err) {
-			panic(err)
+
+	newHash := hashDir(dirForHash...)
+	oldHash := func() uint32 {
+		binary.BigEndian.PutUint32(b, newHash+1)
+
+		fs, err := os.Open(hashFile)
+		if err != nil {
+			return newHash + 1
 		}
-		oldHash = newHash + 1
-	} else {
 		defer fs.Close()
 
 		_, err = fs.Read(b)
 		if err != nil && err != io.EOF {
-			panic(err)
+			sentry.CaptureException(err)
+			return newHash + 1
 		}
 
-		oldHash = binary.BigEndian.Uint32(b)
-	}
+		return binary.BigEndian.Uint32(b)
+	}()
 
 	if newHash != oldHash {
 		os.RemoveAll(dir)
 
 		os.MkdirAll(dir, 0700)
 
-		binary.BigEndian.PutUint32(b, newHash)
-		_, err = fs.Write(b)
-		if err != nil {
-			panic(err)
-		}
+		binary.BigEndian.PutUint32(b, newHash+1)
+		os.WriteFile(hashFile, b, 0600)
 	}
 }
 
