@@ -87,7 +87,7 @@ func (inst *analysisInstance) updateEvents() bool {
 					StartTime: fight.StartTime,
 					EndTime:   fight.EndTime,
 				},
-				AttacksDone: fight.Job == "Paladin", // 충의 계산용...
+				AttacksDone: fight.Job != "Paladin", // 충의 계산용...
 				DebuffsDone: false,
 			}
 			todoList = append(todoList, td)
