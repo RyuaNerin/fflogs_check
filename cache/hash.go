@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 
@@ -26,7 +27,8 @@ func cleanUpWithHash(dir string, dirForHash ...string) {
 		}
 		defer fs.Close()
 
-		_, err = fs.Read(b)
+		r, err := fs.Read(b)
+		log.Println(r)
 		if err != nil && err != io.EOF {
 			sentry.CaptureException(err)
 			return newHash + 1
@@ -40,7 +42,7 @@ func cleanUpWithHash(dir string, dirForHash ...string) {
 
 		os.MkdirAll(dir, 0700)
 
-		binary.BigEndian.PutUint32(b, newHash+1)
+		binary.BigEndian.PutUint32(b, newHash)
 		os.WriteFile(hashFile, b, 0600)
 	}
 }
