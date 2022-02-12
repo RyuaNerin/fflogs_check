@@ -2,11 +2,7 @@ package analysispool
 
 import (
 	"fmt"
-	"hash"
 	"hash/fnv"
-	"io"
-	"os"
-	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -19,50 +15,8 @@ import (
 )
 
 var (
-	csStatistics      = cache.NewStorage("./_cachedata/statistics", time.Hour)
-	analysisFilesHash uint32
+	csStatistics = cache.NewStorage("./_cachedata/statistics", time.Hour, "./analysis", "./ffxiv")
 )
-
-func init() {
-	h := fnv.New32a()
-
-	read := func(path string) {
-		fs, err := os.Open(path)
-		if err != nil {
-			panic(err)
-		}
-
-		_, err = io.Copy(h, fs)
-		if err != nil && err != io.EOF {
-			panic(err)
-		}
-	}
-
-	var walk func(dir string)
-
-	walk = func(dir string) {
-		fiList, err := os.ReadDir(dir)
-		if err != nil {
-			panic(err)
-		}
-
-		for _, fi := range fiList {
-			path := filepath.Join(dir, fi.Name())
-			fmt.Fprint(h, path)
-
-			if fi.IsDir() {
-				walk(path)
-			} else {
-				read(path)
-			}
-		}
-	}
-
-	walk("./analysis")
-	walk("./ffxiv")
-
-	analysisFilesHash = h.Sum32()
-}
 
 func checkOptionValidation(ao *analysis.AnalyzeOptions) bool {
 	ao.CharName = strings.TrimSpace(ao.CharName)
@@ -94,8 +48,8 @@ func checkOptionValidation(ao *analysis.AnalyzeOptions) bool {
 	return false
 }
 
-func getOptionHash(ao *analysis.AnalyzeOptions) hash.Hash {
-	h := fnv.New128a()
+func getOptionHash(ao *analysis.AnalyzeOptions) uint64 {
+	h := fnv.New64()
 
 	b := make([]byte, 8)
 	append := func(s string) {
@@ -127,7 +81,6 @@ func getOptionHash(ao *analysis.AnalyzeOptions) hash.Hash {
 
 	fmt.Fprint(
 		h,
-		analysisFilesHash, "|",
 		ss.Hash, "|",
 	)
 	append(ao.CharName)
@@ -143,5 +96,5 @@ func getOptionHash(ao *analysis.AnalyzeOptions) hash.Hash {
 		append(jobs)
 	}
 
-	return h
+	return h.Sum64()
 }

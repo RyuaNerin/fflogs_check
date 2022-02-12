@@ -2,9 +2,7 @@ package cache
 
 import (
 	"compress/gzip"
-	"encoding/binary"
 	"fmt"
-	"hash"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -16,25 +14,26 @@ import (
 	"github.com/pkg/errors"
 )
 
-type cacheKey struct {
-	v0 uint64
-	v8 uint64
-}
-
 type Storage struct {
 	baseDir string
 
 	savingMapLock sync.RWMutex
-	savingMap     map[cacheKey]struct{}
+	savingMap     map[uint64]struct{}
 
 	cleanUpLock sync.RWMutex
 }
 
-func NewStorage(dir string, expires time.Duration) *Storage {
+func NewStorage(dir string, expires time.Duration, hashDir ...string) *Storage {
+	if len(hashDir) == 0 {
+		panic("empty hashDir")
+	}
+
 	s := &Storage{
 		baseDir:   dir,
-		savingMap: make(map[cacheKey]struct{}, 16),
+		savingMap: make(map[uint64]struct{}, 16),
 	}
+
+	cleanUpWithHash(dir, hashDir...)
 
 	if expires != 0 {
 		go s.cleanup(expires)
@@ -79,60 +78,50 @@ func (s *Storage) cleanup(expires time.Duration) {
 	}
 }
 
-func (s *Storage) getJsonCacheKey(h hash.Hash) (ck cacheKey) {
-	hb := h.Sum(nil)
-
-	ck.v0 = binary.BigEndian.Uint64(hb[0:])
-	ck.v8 = binary.BigEndian.Uint64(hb[8:])
-
-	return
-}
-
-func (s *Storage) lock(hk cacheKey) bool {
+func (s *Storage) lock(h uint64) bool {
 	s.savingMapLock.Lock()
 	defer s.savingMapLock.Unlock()
 
-	_, ok := s.savingMap[hk]
+	_, ok := s.savingMap[h]
 	if !ok {
-		s.savingMap[hk] = struct{}{}
+		s.savingMap[h] = struct{}{}
 	}
 	return !ok
 }
-func (s *Storage) unlock(hk cacheKey) {
+func (s *Storage) unlock(h uint64) {
 	s.savingMapLock.Lock()
 	defer s.savingMapLock.Unlock()
 
-	delete(s.savingMap, hk)
+	delete(s.savingMap, h)
 }
-func (s *Storage) check(hk cacheKey) bool {
+func (s *Storage) check(h uint64) bool {
 	s.savingMapLock.RLock()
 	defer s.savingMapLock.RUnlock()
 
-	_, ok := s.savingMap[hk]
+	_, ok := s.savingMap[h]
 	return ok
 }
 
-func (s *Storage) path(h cacheKey) string {
+func (s *Storage) path(h uint64) string {
 	return fmt.Sprintf(
-		"%s/%02x/%016x/%016x-%016x.json.gz",
+		"%s/%02x/%04x/%016x.json.gz",
 		s.baseDir,
-		(h.v0>>(8*7))&0xFF,
-		h.v0,
-		h.v0, h.v8,
+		(h>>(8*7))&0xFF,
+		(h>>(8*6))&0xFFFF,
+		h,
 	)
 }
 
-func (s *Storage) Save(h hash.Hash, r interface{}) {
+func (s *Storage) Save(h uint64, r interface{}) {
 	s.cleanUpLock.RLock()
 	defer s.cleanUpLock.RUnlock()
 
-	hk := s.getJsonCacheKey(h)
-	if !s.lock(hk) {
+	if !s.lock(h) {
 		return
 	}
-	defer s.unlock(hk)
+	defer s.unlock(h)
 
-	fsPath := s.path(hk)
+	fsPath := s.path(h)
 	os.MkdirAll(filepath.Dir(fsPath), 0700)
 
 	fs, err := os.Create(fsPath)
@@ -167,16 +156,15 @@ func (s *Storage) Save(h hash.Hash, r interface{}) {
 	}
 }
 
-func (s *Storage) Load(h hash.Hash, r interface{}) bool {
+func (s *Storage) Load(h uint64, r interface{}) bool {
 	s.cleanUpLock.RLock()
 	defer s.cleanUpLock.RUnlock()
 
-	hk := s.getJsonCacheKey(h)
-	if s.check(hk) {
+	if s.check(h) {
 		return false
 	}
 
-	fsPath := s.path(hk)
+	fsPath := s.path(h)
 
 	fs, err := os.Open(fsPath)
 	if err != nil {

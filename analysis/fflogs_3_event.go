@@ -2,14 +2,11 @@ package analysis
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
-	"hash/fnv"
 	"log"
 	"sort"
 	"sync/atomic"
 
-	"ffxiv_check/share"
 	"ffxiv_check/share/parallel"
 
 	"github.com/getsentry/sentry-go"
@@ -52,21 +49,8 @@ func (inst *analysisInstance) updateEvents() bool {
 				continue
 			}
 
-			h := fnv.New64a()
-
-			var hash string
-			for {
-				h.Write(share.S2b(report.ReportID))
-				fmt.Fprint(h, fight.FightID)
-
-				hash = "h" + hex.EncodeToString(h.Sum(nil))
-				if _, ok := todoMap[hash]; !ok {
-					break
-				}
-			}
-
 			td := &TodoFight{
-				Hash: hash,
+				Hash: fmt.Sprintf("h%d", len(todoList)),
 
 				ReportID: report.ReportID,
 				FightID:  fight.FightID,
@@ -140,8 +124,10 @@ func (inst *analysisInstance) updateEvents() bool {
 			td.Casts.Done = true
 			td.Buffs.Done = true
 			td.Deaths.Done = true
-			td.done = true
-			atomic.AddInt32(&worked, 1)
+			if !td.done {
+				td.done = true
+				atomic.AddInt32(&worked, 1)
+			}
 			return
 		}
 

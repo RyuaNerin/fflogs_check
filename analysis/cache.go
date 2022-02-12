@@ -8,23 +8,24 @@ import (
 )
 
 var (
-	csReport = cache.NewStorage("./_cachedata/report", 0)
-	csEvents = cache.NewStorage("./_cachedata/events", 0)
+	csReport = cache.NewStorage("./_cachedata/report", 0, "./analysis")
+	csEvents = cache.NewStorage("./_cachedata/events", 0, "./analysis")
 )
 
 func cacheReport(reportId string, fightIds string, r interface{}, saveMode bool) bool {
-	h := fnv.New128a()
+	h := fnv.New64()
 	fmt.Fprintf(
 		h,
 		"%s_fid_%s",
 		reportId, fightIds,
 	)
+	hi := h.Sum64()
 
 	if saveMode {
-		csReport.Save(h, r)
+		csReport.Save(hi, r)
 		return true
 	} else {
-		return csReport.Load(h, r)
+		return csReport.Load(hi, r)
 	}
 }
 
@@ -38,7 +39,7 @@ func cacheCastsEvent(
 	r interface{},
 	saveMode bool,
 ) bool {
-	h := fnv.New128a()
+	h := fnv.New64()
 	fmt.Fprintf(
 		h,
 		"%s_fid_%d_sid_%d___est_%d_eet_%d___bst_%d_bet_%d___dst_%d_det_%d",
@@ -47,11 +48,12 @@ func cacheCastsEvent(
 		buffsStartTime, buffsEndTime,
 		deathsStartTime, deathsEndTime,
 	)
+	hi := h.Sum64()
 
 	if saveMode {
-		csEvents.Save(h, r)
+		csEvents.Save(hi, r)
 		return true
 	} else {
-		return csEvents.Load(h, r)
+		return csEvents.Load(hi, r)
 	}
 }
