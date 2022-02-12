@@ -10,6 +10,10 @@
 <div class="alert alert-danger" role="alert">
     캐릭터를 찾을 수 없습니다.
 </div>
+{{ else if eq $.State "invalid" }}
+<div class="alert alert-danger" role="alert">
+    잘못된 요청입니다.
+</div>
 {{ else }}
 <div id="accordion" class="accordion">
     <div class="accordion-item">

@@ -60,7 +60,14 @@ func Do(ctx context.Context, ws *websocket.Conn) {
 	}()
 
 	if !checkOptionValidation(&q.opt) {
-		q.Error()
+		stat := analysis.Statistic{
+			CharName:   q.opt.CharName,
+			CharServer: q.opt.CharServer,
+			CharRegion: q.opt.CharRegion,
+			UpdatedAt:  time.Now().Format("2006-01-02 15:04:05"),
+			State:      analysis.StatisticStateInvalid,
+		}
+		q.Succ(&stat)
 		return
 	}
 

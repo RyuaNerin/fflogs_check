@@ -10,6 +10,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+	"unicode"
+	"unicode/utf8"
 
 	"ffxiv_check/analysis"
 	"ffxiv_check/cache"
@@ -75,7 +77,7 @@ func checkOptionValidation(ao *analysis.AnalyzeOptions) bool {
 	case len(ao.CharRegion) < 2:
 	case len(ao.CharRegion) > 5:
 	case len(ao.Encouters) == 0:
-	case len(ao.Encouters) > 10:
+	case len(ao.Encouters) > 5:
 	case len(ao.AdditionalPartitions) > 5:
 	case len(ao.Jobs) == 0:
 	case len(ao.Jobs) > len(ffxiv.JobOrder):
@@ -83,10 +85,35 @@ func checkOptionValidation(ao *analysis.AnalyzeOptions) bool {
 		return true
 	}
 
+	for _, job := range ao.Jobs {
+		if _, ok := ffxiv.JobOrder[job]; !ok {
+			return false
+		}
+	}
+
 	return false
 }
 
 func getOptionHash(ao *analysis.AnalyzeOptions) hash.Hash {
+	h := fnv.New128a()
+
+	b := make([]byte, 8)
+	append := func(s string) {
+		for _, c := range s {
+			r := unicode.ToLower(c)
+
+			if r >= 0 {
+				if r < utf8.RuneSelf {
+					b[0] = byte(r)
+					h.Write(b[:1])
+				} else {
+					n := utf8.EncodeRune(b, r)
+					h.Write(b[:n])
+				}
+			}
+		}
+	}
+
 	var ss ffxiv.SkillSets
 	if ao.CharRegion == "kr" {
 		ss = ffxiv.Korea
@@ -98,19 +125,22 @@ func getOptionHash(ao *analysis.AnalyzeOptions) hash.Hash {
 	sort.Ints(ao.AdditionalPartitions)
 	sort.Strings(ao.Jobs)
 
-	h := fnv.New128a()
 	fmt.Fprint(
 		h,
 		analysisFilesHash, "|",
 		ss.Hash, "|",
-		strings.ToLower(ao.CharName), "|",
-		strings.ToLower(ao.CharServer), "|",
-		strings.ToLower(ao.CharRegion), "|",
+	)
+	append(ao.CharName)
+	append(ao.CharServer)
+	append(ao.CharRegion)
+
+	fmt.Fprint(
+		h,
 		ao.Encouters, "|",
 		ao.AdditionalPartitions, "|",
 	)
 	for _, jobs := range ao.Jobs {
-		fmt.Fprintf(h, strings.ToLower(jobs), "|")
+		append(jobs)
 	}
 
 	return h
