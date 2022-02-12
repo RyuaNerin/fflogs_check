@@ -18,49 +18,59 @@ func (inst *analysisInstance) buildReportFight() {
 		for _, skillId := range inst.skillSets.Job[fight.Job] {
 			skillInfo := inst.skillSets.Action[skillId]
 
-			used := 0
-			nextCooldown := 0
-
 			switch skillId {
-			case ffxiv.SkillIdDeath:
-				used = len(fight.Deaths)
-
-			case ffxiv.SkillIdPotion:
-				for _, event := range fight.Buffs {
-					if event.removed {
-						event.timestamp = event.timestamp - ffxiv.PotionBuffTime
-					}
-					if nextCooldown > 0 && event.timestamp < nextCooldown {
-						// 적용 후 꺼진 버프
-						// 탕약 버프가 두번 뜨는 경우가 있음
-						continue
-					}
-
-					used++
-					nextCooldown = event.timestamp + skillInfo.Cooldown*1000
+			case ffxiv.SkillIdReduceDamangeDebuff:
+				fight.skillData[skillId] = &analysisFightSkill{
+					Used:           fight.Debuff.ReduceDamange.count,
+					UsedForPercent: fightTime - fight.Debuff.ReduceDamange.uptime,
+					MaxForPercent:  fightTime,
 				}
 
 			default:
-				for _, event := range fight.Casts {
-					if skillId != 0 && event.gameID != skillId {
-						continue
+				used := 0
+				nextCooldown := 0
+
+				switch skillId {
+				case ffxiv.SkillIdDeath:
+					used = len(fight.Deaths)
+
+				case ffxiv.SkillIdPotion:
+					for _, event := range fight.Buffs {
+						if event.removed {
+							event.timestamp = event.timestamp - ffxiv.PotionBuffTime
+						}
+						if nextCooldown > 0 && event.timestamp < nextCooldown {
+							// 적용 후 꺼진 버프
+							// 탕약 버프가 두번 뜨는 경우가 있음
+							continue
+						}
+
+						used++
+						nextCooldown = event.timestamp + skillInfo.Cooldown*1000
 					}
 
-					used++
-				}
-			}
+				default:
+					for _, event := range fight.Casts {
+						if skillId != 0 && event.gameID != skillId {
+							continue
+						}
 
-			if skillInfo.WithDowntime {
-				fight.skillData[skillId] = &analysisFightSkill{
-					Used:       used,
-					UsedShared: used,
-					Max:        int(math.Ceil(float64(fightTime) / float64(skillInfo.Cooldown*1000))),
+						used++
+					}
 				}
-			} else {
-				fight.skillData[skillId] = &analysisFightSkill{
-					Used:       used,
-					UsedShared: used,
-					Max:        0,
+
+				if skillInfo.WithDowntime {
+					fight.skillData[skillId] = &analysisFightSkill{
+						Used:           used,
+						UsedForPercent: used,
+						MaxForPercent:  int(math.Ceil(float64(fightTime) / float64(skillInfo.Cooldown*1000))),
+					}
+				} else {
+					fight.skillData[skillId] = &analysisFightSkill{
+						Used:           used,
+						UsedForPercent: used,
+						MaxForPercent:  0,
+					}
 				}
 			}
 		}
@@ -83,7 +93,7 @@ func (inst *analysisInstance) buildReportFight() {
 				continue
 			}
 
-			v.UsedShared = sum
+			v.UsedForPercent = sum
 		}
 	}
 

@@ -31,15 +31,17 @@ func (inst *analysisInstance) updateEvents() bool {
 		FightID  int
 		SourceID int
 
-		Casts        TodoFightEvent
-		Buffs        TodoFightEvent
-		Deaths       TodoFightEvent
-		NeedsAttacks bool
+		StartTime int
+		EndTime   int
+
+		Casts       TodoFightEvent
+		Buffs       TodoFightEvent
+		Deaths      TodoFightEvent
+		AttacksDone bool
+		DebuffsDone bool
 
 		done    bool
 		retries int
-
-		fightStartTime int
 	}
 
 	todoList := make([]*TodoFight, 0, len(inst.Reports))
@@ -64,10 +66,15 @@ func (inst *analysisInstance) updateEvents() bool {
 			}
 
 			td := &TodoFight{
-				Hash:     hash,
+				Hash: hash,
+
 				ReportID: report.ReportID,
 				FightID:  fight.FightID,
 				SourceID: fight.SourceID,
+
+				StartTime: fight.StartTime,
+				EndTime:   fight.EndTime,
+
 				Casts: TodoFightEvent{
 					StartTime: fight.StartTime,
 					EndTime:   fight.EndTime,
@@ -80,8 +87,8 @@ func (inst *analysisInstance) updateEvents() bool {
 					StartTime: fight.StartTime,
 					EndTime:   fight.EndTime,
 				},
-				NeedsAttacks:   fight.Job == "Paladin", // 충의 계산용...
-				fightStartTime: fight.StartTime,
+				AttacksDone: fight.Job == "Paladin", // 충의 계산용...
+				DebuffsDone: false,
 			}
 			todoList = append(todoList, td)
 			todoMap[td.Hash] = td
@@ -107,10 +114,19 @@ func (inst *analysisInstance) updateEvents() bool {
 		Attacks *struct {
 			Data struct {
 				Entries []struct {
-					Uses int `json:"uses"`
+					Uses int `json:"uses"` // Attacks
 				} `json:"entries"`
 			} `json:"data"`
 		} `json:"attacks"`
+		Debuffs *struct {
+			Data struct {
+				Auras []struct {
+					GUID        int `json:"guid"`        // Debuffs
+					TotalUptime int `json:"totalUptime"` // Debuffs
+					TotalUses   int `json:"totalUses"`   // Debuffs
+				} `json:"auras"`
+			} `json:"data"`
+		} `json:"debuffs"`
 	}
 
 	var worked int32
@@ -173,7 +189,7 @@ func (inst *analysisInstance) updateEvents() bool {
 						fightInfo.Casts,
 						analysisEvent{
 							gameID:    event.AbilityGameID,
-							timestamp: event.Timestamp - td.fightStartTime,
+							timestamp: event.Timestamp - td.StartTime,
 						},
 					)
 				}
@@ -205,7 +221,7 @@ func (inst *analysisInstance) updateEvents() bool {
 					fightInfo.Buffs = append(
 						fightInfo.Buffs,
 						analysisBuff{
-							timestamp: event.Timestamp - td.fightStartTime,
+							timestamp: event.Timestamp - td.StartTime,
 							gameID:    event.AbilityGameID,
 							removed:   false,
 						},
@@ -214,7 +230,7 @@ func (inst *analysisInstance) updateEvents() bool {
 					fightInfo.Buffs = append(
 						fightInfo.Buffs,
 						analysisBuff{
-							timestamp: event.Timestamp - td.fightStartTime,
+							timestamp: event.Timestamp - td.StartTime,
 							gameID:    event.AbilityGameID,
 							removed:   true,
 						},
@@ -244,7 +260,7 @@ func (inst *analysisInstance) updateEvents() bool {
 					fightInfo.Deaths = append(
 						fightInfo.Deaths,
 						analysisDeath{
-							timestamp: event.Timestamp - td.fightStartTime,
+							timestamp: event.Timestamp - td.StartTime,
 						},
 					)
 				}
@@ -252,15 +268,29 @@ func (inst *analysisInstance) updateEvents() bool {
 		}
 
 		if resp.Attacks != nil {
-			td.NeedsAttacks = false
+			td.AttacksDone = true
 
 			for _, entries := range resp.Attacks.Data.Entries {
 				fightInfo.AutoAttacks += entries.Uses
 			}
 		}
 
+		if resp.Debuffs != nil {
+			td.DebuffsDone = true
+
+			for _, auras := range resp.Debuffs.Data.Auras {
+				switch auras.GUID {
+				case 1002092: // 주는 피해량 감소 (칠흑 재생편)
+					fallthrough
+				case 1002911: // 주는 피해량 감소 (효월 변옥편)
+					fightInfo.Debuff.ReduceDamange.count = auras.TotalUses
+					fightInfo.Debuff.ReduceDamange.uptime = auras.TotalUptime
+				}
+			}
+		}
+
 		if !td.done {
-			if td.Casts.Done && td.Buffs.Done && td.Deaths.Done && !td.NeedsAttacks {
+			if td.Casts.Done && td.Buffs.Done && td.Deaths.Done && td.AttacksDone && td.DebuffsDone {
 				td.done = true
 				fightInfo.DoneEvents = true
 				atomic.AddInt32(&worked, 1)

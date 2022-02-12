@@ -23,8 +23,12 @@
 			}
 			{{ end }}
 			
-			{{ if .NeedsAttacks }}
-			attacks: table(dataType: DamageDone, startTime: {{ .Deaths.StartTime }}, endTime: {{ .Deaths.EndTime }}, sourceID: {{ .SourceID }}, abilityID: 7)
+			{{ if not .AttacksDone }}
+			attacks: table(dataType: DamageDone, startTime: {{ .StartTime }}, endTime: {{ .EndTime }}, sourceID: {{ .SourceID }}, abilityID: 7)
+			{{ end }}
+
+			{{ if not .DebuffsDone }}
+			debuffs: table(dataType: Debuffs, startTime: {{ .StartTime }}, endTime: {{ .EndTime }}, sourceID: {{ .SourceID }})
 			{{ end }}
 		}
 		{{ end }}

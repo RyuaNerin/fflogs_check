@@ -74,9 +74,8 @@ func (inst *analysisInstance) buildReportCacl1(stat *Statistic) {
 			if skillInfo.WithDowntime {
 				//cooldown := float64(totalCooldown) / float64(fightTime) * 100
 				var cooldown float64 = 0
-
-				if fightSkillData.Max > 0 {
-					cooldown = float64(fightSkillData.UsedShared) / float64(fightSkillData.Max) * 100
+				if fightSkillData.MaxForPercent > 0 {
+					cooldown = float64(fightSkillData.UsedForPercent) / float64(fightSkillData.MaxForPercent) * 100
 				}
 
 				if math.IsNaN(cooldown) {
@@ -86,6 +85,11 @@ func (inst *analysisInstance) buildReportCacl1(stat *Statistic) {
 				buffUsage.Cooldown.data = append(buffUsage.Cooldown.data, float32(cooldown))
 
 				if skillInfo.ContainsInScore {
+					switch skillId {
+					case ffxiv.SkillIdReduceDamangeDebuff:
+						cooldown = 1 - float64(fightSkillData.UsedForPercent)/float64(fightSkillData.MaxForPercent)*100
+					}
+
 					jobScore.scoreSum += cooldown
 					jobScore.scoreCount++
 

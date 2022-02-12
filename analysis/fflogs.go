@@ -77,6 +77,8 @@ type analysisFight struct {
 	Buffs  []analysisBuff
 	Deaths []analysisDeath
 
+	Debuff analysisDebuffs
+
 	AutoAttacks int
 
 	skillData map[int]*analysisFightSkill
@@ -93,11 +95,17 @@ type analysisBuff struct {
 type analysisDeath struct {
 	timestamp int
 }
-
+type analysisDebuffs struct {
+	ReduceDamange analysisDebuff
+}
+type analysisDebuff struct {
+	count  int
+	uptime int
+}
 type analysisFightSkill struct {
-	Used       int
-	UsedShared int // 쿨 공유하는거 최대 사용 횟수 맞추기 위한 수...
-	Max        int
+	Used           int
+	UsedForPercent int // 쿨 공유하는거 최대 사용 횟수 맞추기 위한 수...
+	MaxForPercent  int
 }
 
 var (

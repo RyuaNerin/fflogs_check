@@ -14,8 +14,9 @@ import (
 )
 
 const (
-	SkillIdDeath  = -1
-	SkillIdPotion = -2
+	SkillIdDeath               = -1
+	SkillIdPotion              = -2
+	SkillIdReduceDamangeDebuff = -3
 
 	PotionBuffTime = 30 * 1000
 )
@@ -59,6 +60,9 @@ func init() {
 	update(&Korea, SkillIdPotion, "강화약", "016000-016203.png", 270)
 	update(&Global, SkillIdPotion, "Medicated", "016000-016203.png", 270)
 
+	update(&Korea, SkillIdReduceDamangeDebuff, "주는 피해량 감소", "015000-015520.png", 0)
+	update(&Global, SkillIdReduceDamangeDebuff, "Damage Down", "015000-015520.png", 0)
+
 	calcVerison(&Global)
 	calcVerison(&Korea)
 }
@@ -68,7 +72,6 @@ func update(ss *SkillSets, id int, name string, icon string, cooldown int) {
 	v.Name = name
 	v.IconUrl = icon
 	v.Cooldown = cooldown
-	v.OrderIndex = id
 
 	ss.Action[id] = v
 }
