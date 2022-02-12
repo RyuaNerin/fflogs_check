@@ -28,8 +28,8 @@ func (inst *analysisInstance) buildReport() (stat *Statistic) {
 	}
 
 	// stat 계산
-	inst.buildReportCacl1(stat)
-	inst.buildReportCacl2(stat)
+	inst.buildReportCaclPrepare(stat)
+	inst.buildReportCalcStat(stat)
 
 	// check NaN
 	inst.buildReportCheckNaN(stat)

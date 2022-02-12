@@ -5,7 +5,7 @@ import (
 )
 
 // Score, Med, Avg 등을 계산하는 부분
-func (inst *analysisInstance) buildReportCacl2(stat *Statistic) {
+func (inst *analysisInstance) buildReportCalcStat(stat *Statistic) {
 	for _, jobData := range stat.jobsMap {
 		if jobData.scoreCount > 0 {
 			jobData.Score = float32(jobData.scoreSum / float64(jobData.scoreCount))

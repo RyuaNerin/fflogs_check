@@ -1,13 +1,14 @@
 package analysis
 
 import (
-	"ffxiv_check/ffxiv"
 	"log"
 	"math"
+
+	"ffxiv_check/ffxiv"
 )
 
 // avg, med 계산을 위해 사용 횟수 등을 체크하는 부분
-func (inst *analysisInstance) buildReportCacl1(stat *Statistic) {
+func (inst *analysisInstance) buildReportCaclPrepare(stat *Statistic) {
 	for _, fightData := range inst.Fights {
 		if !fightData.DoneEvents {
 			continue
