@@ -43,7 +43,7 @@ func NewStorage(dir string, expires time.Duration, hashDir ...string) *Storage {
 }
 
 func (s *Storage) cleanup(expires time.Duration) {
-	t := time.NewTicker(time.Second)
+	t := time.NewTicker(30 * time.Second)
 
 	for {
 		<-t.C
