@@ -11,22 +11,27 @@ import (
 
 func cleanUpWithHash(dir string, dirForHash ...string) {
 	newHash := hashDir(dirForHash...)
+	var oldHash uint32
 
 	b := make([]byte, 4)
 
 	hashFile := filepath.Join(dir, "hash")
 	fs, err := os.OpenFile(hashFile, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0400)
-	if err != nil && !os.IsNotExist(err) {
-		panic(err)
-	}
-	defer fs.Close()
+	if err != nil {
+		if !os.IsNotExist(err) {
+			panic(err)
+		}
+		oldHash = newHash + 1
+	} else {
+		defer fs.Close()
 
-	_, err = fs.Read(b)
-	if err != nil && err != io.EOF {
-		panic(err)
-	}
+		_, err = fs.Read(b)
+		if err != nil && err != io.EOF {
+			panic(err)
+		}
 
-	oldHash := binary.BigEndian.Uint32(b)
+		oldHash = binary.BigEndian.Uint32(b)
+	}
 
 	if newHash != oldHash {
 		os.RemoveAll(dir)

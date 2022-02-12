@@ -1,6 +1,6 @@
 ﻿0,이름,ID,global,kr,cooldown%,score,Paladin,Warrior,DarkKnight,Gunbreaker,WhiteMage,Scholar,Astrologian,Sage,Monk,Dragoon,Ninja,Samurai,Reaper,Bard,Machinist,Dancer,BlackMage,Summoner,RedMage
 1,사망,-1,v,v,,,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v
-1,주는 피해량 감소,-3,v,v,,,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v
+1,주는 피해량 감소,-3,v,v,v,,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v
 1,강화약,-2,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v
 1,레이즈,125,v,v,,,,,,,v,,,,,,,,,,,,,,
 1,부활,173,v,v,,,,,,,,v,,,,,,,,,,,,v,

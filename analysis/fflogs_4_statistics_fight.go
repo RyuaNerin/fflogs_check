@@ -22,7 +22,7 @@ func (inst *analysisInstance) buildReportFight() {
 			case ffxiv.SkillIdReduceDamangeDebuff:
 				fight.skillData[skillId] = &analysisFightSkill{
 					Used:           fight.Debuff.ReduceDamange.count,
-					UsedForPercent: fightTime - fight.Debuff.ReduceDamange.uptime,
+					UsedForPercent: fight.Debuff.ReduceDamange.uptime,
 					MaxForPercent:  fightTime,
 				}
 
