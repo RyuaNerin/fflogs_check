@@ -74,6 +74,7 @@
                         {{/* ================================================== */}}
                         {{/* 보스별 영역 */}}
                         {{ range $i, $enc := $.Encounters }}
+                        {{ if ne $enc.ID 0 }}
                         <tr>
                             <th scope="row">{{ $enc.Name }}</th>
                             {{ range $ii, $jobTarget := $.Jobs }}
@@ -112,6 +113,7 @@
                             </td>
                             {{ end }}
                         </tr>
+                        {{ end }}
                         {{ end }}
                     </tbody>
                 </table>

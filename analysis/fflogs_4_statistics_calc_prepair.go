@@ -9,32 +9,64 @@ import (
 
 // avg, med 계산을 위해 사용 횟수 등을 체크하는 부분
 func (inst *analysisInstance) buildReportCaclPrepare(stat *Statistic) {
+	getEncData := func(encounterID int) *StatisticEncounter {
+		encData, ok := stat.encountersMap[encounterID]
+		if !ok {
+			encData = &StatisticEncounter{
+				ID:      encounterID,
+				Name:    inst.encounterNames[encounterID],
+				jobsMap: make(map[string]*StatisticEncounterJob, len(inst.InpCharJobs)),
+			}
+			stat.encountersMap[encounterID] = encData
+		}
+
+		return encData
+	}
+	getEncJobData := func(encData *StatisticEncounter, job string) *StatisticEncounterJob {
+		encJobData, ok := encData.jobsMap[job]
+		if !ok {
+			encJobData = &StatisticEncounterJob{
+				ID:        ffxiv.JobOrder[job],
+				Job:       job,
+				skillsMap: make(map[int]*StatisticSkill, len(inst.skillSets.Job[job])),
+			}
+			encData.jobsMap[job] = encJobData
+		}
+
+		return encJobData
+	}
+	getBuffUsage := func(encJob *StatisticEncounterJob, skillInfo ffxiv.SkillData) *StatisticSkill {
+		buffUsage, ok := encJob.skillsMap[skillInfo.ID]
+		if !ok {
+			buffUsage = &StatisticSkill{
+				Info: BuffSkillInfo{
+					ID:              skillInfo.ID,
+					Cooldown:        skillInfo.Cooldown,
+					Name:            skillInfo.Name,
+					Icon:            skillInfo.IconUrl,
+					WithDowntime:    skillInfo.WithDowntime,
+					ContainsInScore: skillInfo.ContainsInScore,
+				},
+			}
+			encJob.skillsMap[skillInfo.ID] = buffUsage
+		}
+		return buffUsage
+	}
+
 	for _, fightData := range inst.Fights {
 		if !fightData.DoneEvents {
 			continue
 		}
 
-		encData, ok := stat.encountersMap[fightData.EncounterID]
-		if !ok {
-			encData = &StatisticEncounter{
-				ID:      fightData.EncounterID,
-				Name:    inst.encounterNames[fightData.EncounterID],
-				jobsMap: make(map[string]*StatisticEncounterJob, len(inst.InpCharJobs)),
-			}
-			stat.encountersMap[fightData.EncounterID] = encData
-		}
-		encData.Kills++
+		encCur := getEncData(fightData.EncounterID)
+		encCur.Kills++
+		encCurJob := getEncJobData(encCur, fightData.Job)
+		encCurJob.Kills++
 
-		encJobData, ok := encData.jobsMap[fightData.Job]
-		if !ok {
-			encJobData = &StatisticEncounterJob{
-				ID:        ffxiv.JobOrder[fightData.Job],
-				Job:       fightData.Job,
-				skillsMap: make(map[int]*StatisticSkill, len(inst.skillSets.Job[fightData.Job])),
-			}
-			encData.jobsMap[fightData.Job] = encJobData
-		}
-		encJobData.Kills++
+		encAll := getEncData(0)
+		encAll.Kills++
+		encAllJob := getEncJobData(encAll, fightData.Job)
+		encAllJob.Kills++
 
 		jobScoreAll := stat.jobsMap[""]
 		jobScoreAll.Kills++
@@ -52,24 +84,13 @@ func (inst *analysisInstance) buildReportCaclPrepare(stat *Statistic) {
 		for _, skillId := range inst.skillSets.Job[fightData.Job] {
 			skillInfo := inst.skillSets.Action[skillId]
 
-			buffUsage, ok := encJobData.skillsMap[skillId]
-			if !ok {
-				buffUsage = &StatisticSkill{
-					Info: BuffSkillInfo{
-						ID:              skillInfo.ID,
-						Cooldown:        skillInfo.Cooldown,
-						Name:            skillInfo.Name,
-						Icon:            skillInfo.IconUrl,
-						WithDowntime:    skillInfo.WithDowntime,
-						ContainsInScore: skillInfo.ContainsInScore,
-					},
-				}
-				encJobData.skillsMap[skillId] = buffUsage
-			}
+			encCurJobSkill := getBuffUsage(encCurJob, skillInfo)
+			encAllJobSkill := getBuffUsage(encAllJob, skillInfo)
 
 			fightSkillData := fightData.skillData[skillId]
 
-			buffUsage.Usage.data = append(buffUsage.Usage.data, fightSkillData.Used)
+			encCurJobSkill.Usage.data = append(encCurJobSkill.Usage.data, fightSkillData.Used)
+			encAllJobSkill.Usage.data = append(encAllJobSkill.Usage.data, fightSkillData.Used)
 
 			// 최대 사용 가능 횟수 세기
 			if skillInfo.WithDowntime {
@@ -83,7 +104,8 @@ func (inst *analysisInstance) buildReportCaclPrepare(stat *Statistic) {
 					log.Println("fffffffffffffffff")
 				}
 
-				buffUsage.Cooldown.data = append(buffUsage.Cooldown.data, float32(cooldown))
+				encCurJobSkill.Cooldown.data = append(encCurJobSkill.Cooldown.data, float32(cooldown))
+				encAllJobSkill.Cooldown.data = append(encAllJobSkill.Cooldown.data, float32(cooldown))
 
 				if skillInfo.ContainsInScore {
 					switch skillId {
@@ -97,11 +119,11 @@ func (inst *analysisInstance) buildReportCaclPrepare(stat *Statistic) {
 					jobScoreAll.scoreSum += cooldown
 					jobScoreAll.scoreCount++
 
-					encData.scoreSum += cooldown
-					encData.scoreCount++
+					encCur.scoreSum += cooldown
+					encCur.scoreCount++
 
-					encJobData.scoreSum += cooldown
-					encJobData.scoreCount++
+					encCurJob.scoreSum += cooldown
+					encCurJob.scoreCount++
 				}
 			}
 		}

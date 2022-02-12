@@ -26,6 +26,11 @@ func (inst *analysisInstance) buildReport() (stat *Statistic) {
 	stat.jobsMap[""] = &StatisticJob{
 		Job: "All",
 	}
+	stat.encountersMap[0] = &StatisticEncounter{
+		ID:      0,
+		Name:    "종합",
+		jobsMap: make(map[string]*StatisticEncounterJob, len(inst.InpCharJobs)),
+	}
 
 	// stat 계산
 	inst.buildReportCaclPrepare(stat)
