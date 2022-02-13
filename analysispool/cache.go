@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"hash/fnv"
 	"sort"
-	"strings"
 	"time"
 	"unicode"
 	"unicode/utf8"
@@ -17,36 +16,6 @@ import (
 var (
 	csStatistics = cache.NewStorage("./_cachedata/statistics", time.Hour, "./analysis", "./ffxiv")
 )
-
-func checkOptionValidation(ao *analysis.AnalyzeOptions) bool {
-	ao.CharName = strings.TrimSpace(ao.CharName)
-	ao.CharServer = strings.TrimSpace(ao.CharServer)
-	ao.CharRegion = strings.TrimSpace(ao.CharRegion)
-
-	switch {
-	case len(ao.CharName) < 3:
-	case len(ao.CharName) > 20:
-	case len(ao.CharServer) < 3:
-	case len(ao.CharServer) > 10:
-	case len(ao.CharRegion) < 2:
-	case len(ao.CharRegion) > 5:
-	case len(ao.Encouters) == 0:
-	case len(ao.Encouters) > 5:
-	case len(ao.AdditionalPartitions) > 5:
-	case len(ao.Jobs) == 0:
-	case len(ao.Jobs) > len(ffxiv.JobOrder):
-	default:
-		return true
-	}
-
-	for _, job := range ao.Jobs {
-		if _, ok := ffxiv.JobOrder[job]; !ok {
-			return false
-		}
-	}
-
-	return false
-}
 
 func getOptionHash(ao *analysis.AnalyzeOptions) uint64 {
 	h := fnv.New64()

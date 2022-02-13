@@ -5,9 +5,12 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
+	"unicode/utf8"
 
 	"ffxiv_check/analysis"
+	"ffxiv_check/ffxiv"
 
 	"github.com/getsentry/sentry-go"
 	"github.com/gorilla/websocket"
@@ -20,6 +23,40 @@ var (
 	}
 	websockEmptyClosure = websocket.FormatCloseMessage(websocket.CloseNormalClosure, "")
 )
+
+func checkOptionValidation(ao *analysis.AnalyzeOptions) bool {
+	ao.CharName = strings.TrimSpace(ao.CharName)
+	ao.CharServer = strings.TrimSpace(ao.CharServer)
+	ao.CharRegion = strings.TrimSpace(ao.CharRegion)
+
+	lenCharName := utf8.RuneCountInString(ao.CharName)
+	lenCharServer := utf8.RuneCountInString(ao.CharServer)
+	lenCharRegion := utf8.RuneCountInString(ao.CharRegion)
+
+	switch {
+	case lenCharName < 3:
+	case lenCharName > 20:
+	case lenCharServer < 3:
+	case lenCharServer > 10:
+	case lenCharRegion < 2:
+	case lenCharRegion > 5:
+	case len(ao.Encouters) == 0:
+	case len(ao.Encouters) > 5:
+	case len(ao.AdditionalPartitions) > 5:
+	case len(ao.Jobs) == 0:
+	case len(ao.Jobs) > len(ffxiv.JobOrder):
+	default:
+		return true
+	}
+
+	for _, job := range ao.Jobs {
+		if _, ok := ffxiv.JobOrder[job]; !ok {
+			return false
+		}
+	}
+
+	return false
+}
 
 func Do(ctx context.Context, ws *websocket.Conn) {
 	ctx, ctxCancel := context.WithCancel(ctx)
