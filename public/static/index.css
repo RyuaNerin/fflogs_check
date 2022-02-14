@@ -2,7 +2,6 @@
     width: 20px;
     height: 20px;
     --size: 20;
-    float: left;
     margin-right: 6px;
     margin-left: 2px;
 }
@@ -11,7 +10,6 @@
     width: 32px;
     height: 32px;
     --size: 32;
-    /* float: left; */
     margin-right: 6px;
     margin-left: 2px;
 }
@@ -101,4 +99,18 @@
 .RedMage {
     -o-object-position: calc(-0px * var(--size)) calc(-5px * var(--size));
     object-position:    calc(-0px * var(--size)) calc(-5px * var(--size));
+}
+
+.icon20.job20.Reaper {
+    content:url("img/Reaper_Icon_3__20.png");
+}
+.icon32.job32.Reaper {
+    content:url("img/Reaper_Icon_3__32.png");
+}
+
+.icon20.job20.Sage {
+    content:url("img/Sage_Icon_3__20.png");
+}
+.icon32.job32.Sage {
+    content:url("img/Sage_Icon_3__32.png");
 }

@@ -28,7 +28,7 @@
     <div class="container-sm">
         <h1 class="fw-bold">FFLogs Check</h1>
 
-        <div class="fs-6 my-3">만든이 : <a href="//ryuar.in/" class="text-decoration-none fw-bold">류아네린(@RyuaNerin, 륜아린@모그리)</a></div>
+        <div class="fs-6 my-3">만든이 : <a href="//ryuar.in/" class="text-decoration-none fw-bold" target="_blank">류아네린 (@RyuaNerin, 륜아린@모그리)</a></div>
 
         <div>이 페이지는 데스크탑 환경에 적적화 되어 있습니다.</div>
 
@@ -56,7 +56,7 @@
             <div class="col-4 mb-3">
                 <label for="charServer" class="form-label fs-5 fw-bold">캐릭터 서버</label>
                 <select class="form-select" id="charServer">
-                    <option value="kr_Moogle" selected>모그리</option>
+                    <option value="kr_Moogle" selected>모그리 (한국)</option>
                     <option value="kr_Carbuncle">카벙클 (한국)</option>
                     <option value="kr_Chocobo">초코보 (한국)</option>
                     <option value="kr_Tonberry">톤베리 (한국)</option>
@@ -143,24 +143,27 @@
         </div>
 
         <div class="row">
-            <div class="col-6">
+            <div class="col-12 col-lg-6">
                 <label class="form-label fs-5 fw-bold">분석할 레이드</label>
 
                 <div class="mb-3">
-                    <input class="form-check-input" type="checkbox" value="" id="includeEcho" checked>
-                    <label class="form-check-label" for="includeEcho">초월하는 힘 포함</label>
-                </div>
-                
-                <div class="mb-3">
+                    <label class="form-label fw-bold">효월의 종언</label>
                     <div class="form-check">
                         <input class="form-check-input" type="radio" name="encounter" id="zoneAsphodelos" value="asphodelos">
                         <label class="form-check-label" for="zoneAsphodelos">마의 전당 판데모니움: 변옥편</label>
                     </div>
                     <div class="form-check">
                         <input class="form-check-input" type="radio" name="encounter" id="zoneUltimate_6" value="ultimate_6">
-                        <label class="form-check-label" for="zoneUltimate_6">절 토벌전 (효월)</label>
+                        <label class="form-check-label" for="zoneUltimate_6">절 토벌전</label>
                     </div>
-                    <hr />
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold">칠흑의 반역자</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="" id="includeEcho" checked>
+                        <label class="form-check-label" for="includeEcho">초월하는 힘 포함</label>
+                    </div>
                     <div class="form-check">
                         <input class="form-check-input" type="radio" name="encounter" id="zoneEdenPromise" value="eden_promise" checked>
                         <label class="form-check-label" for="zoneEden">희망의 낙원 에덴: 재생편</label>
@@ -171,94 +174,92 @@
                     </div>
                 </div>
             </div>
-            <div class="col-6">
-                <div class="col-8 mb-3">
-                    <label class="form-label fs-5 fw-bold">분석할 직업</label>
-                    <div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="checkbox" id="jobPaladin" checked>
-                            <label class="form-check-label" for="jobPaladin"><img class="icon20 job20 spirit Paladin"> 나</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="checkbox" id="jobWarrior" checked>
-                            <label class="form-check-label" for="jobWarrior"><img class="icon20 job20 spirit Warrior"> 전</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="checkbox" id="jobDarkKnight" checked>
-                            <label class="form-check-label" for="jobDarkKnight"><img class="icon20 job20 spirit DarkKnight"> 암</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="checkbox" id="jobGunbreaker" checked>
-                            <label class="form-check-label" for="jobGunbreaker"><img class="icon20 job20 spirit Gunbreaker"> 건</label>
-                        </div>
+            <div class="col-12 col-lg-6">
+                <label class="form-label fs-5 fw-bold">분석할 직업</label>
+                <div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="jobPaladin" checked>
+                        <label class="form-check-label" for="jobPaladin"><img class="icon32 job32 Paladin"> 나</label>
                     </div>
-                    <div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="checkbox" id="jobWhiteMage" checked>
-                            <label class="form-check-label" for="jobWhiteMage"><img class="icon20 job20 spirit WhiteMage"> 백</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="checkbox" id="jobScholar" checked>
-                            <label class="form-check-label" for="jobScholar"><img class="icon20 job20 spirit Scholar"> 학</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="checkbox" id="jobAstrologian" checked>
-                            <label class="form-check-label" for="jobAstrologian"><img class="icon20 job20 spirit Astrologian"> 점</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="checkbox" id="jobSage" checked>
-                            <label class="form-check-label" for="jobSage"><img class="icon20 job20 spirit Sage"> 현</label>
-                        </div>
-                    </div>            
-                    <div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="checkbox" id="jobMonk" checked>
-                            <label class="form-check-label" for="jobMonk"><img class="icon20 job20 spirit Monk"> 몽</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="checkbox" id="jobDragoon" checked>
-                            <label class="form-check-label" for="jobDragoon"><img class="icon20 job20 spirit Dragoon"> 용</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="checkbox" id="jobNinja" checked>
-                            <label class="form-check-label" for="jobNinja"><img class="icon20 job20 spirit Ninja"> 닌</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="checkbox" id="jobSamurai" checked>
-                            <label class="form-check-label" for="jobSamurai"><img class="icon20 job20 spirit Samurai"> 사</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="checkbox" id="jobReaper" checked>
-                            <label class="form-check-label" for="jobReaper"><img class="icon20 job20 spirit Reaper"> 리</label>
-                        </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="jobWarrior" checked>
+                        <label class="form-check-label" for="jobWarrior"><img class="icon32 job32 Warrior"> 전</label>
                     </div>
-                    <div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="checkbox" id="jobBard" checked>
-                            <label class="form-check-label" for="jobBard"><img class="icon20 job20 spirit Bard"> 음</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="checkbox" id="jobMachinist" checked>
-                            <label class="form-check-label" for="jobMachinist"><img class="icon20 job20 spirit Machinist"> 기</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="checkbox" id="jobDancer" checked>
-                            <label class="form-check-label" for="jobDancer"><img class="icon20 job20 spirit Dancer"> 무</label>
-                        </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="jobDarkKnight" checked>
+                        <label class="form-check-label" for="jobDarkKnight"><img class="icon32 job32 DarkKnight"> 암</label>
                     </div>
-                    <div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="checkbox" id="jobBlackMage" checked>
-                            <label class="form-check-label" for="jobBlackMage"><img class="icon20 job20 spirit BlackMage"> 흑</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="checkbox" id="jobSummoner" checked>
-                            <label class="form-check-label" for="jobSummoner"><img class="icon20 job20 spirit Summoner"> 소</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="checkbox" id="jobRedMage" checked>
-                            <label class="form-check-label" for="jobRedMage"><img class="icon20 job20 spirit RedMage"> 적</label>
-                        </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="jobGunbreaker" checked>
+                        <label class="form-check-label" for="jobGunbreaker"><img class="icon32 job32 Gunbreaker"> 건</label>
+                    </div>
+                </div>
+                <div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="jobWhiteMage" checked>
+                        <label class="form-check-label" for="jobWhiteMage"><img class="icon32 job32 WhiteMage"> 백</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="jobScholar" checked>
+                        <label class="form-check-label" for="jobScholar"><img class="icon32 job32 Scholar"> 학</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="jobAstrologian" checked>
+                        <label class="form-check-label" for="jobAstrologian"><img class="icon32 job32 Astrologian"> 점</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="jobSage" checked>
+                        <label class="form-check-label" for="jobSage"><img class="icon32 job32 Sage"> 현</label>
+                    </div>
+                </div>            
+                <div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="jobMonk" checked>
+                        <label class="form-check-label" for="jobMonk"><img class="icon32 job32 Monk"> 몽</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="jobDragoon" checked>
+                        <label class="form-check-label" for="jobDragoon"><img class="icon32 job32 Dragoon"> 용</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="jobNinja" checked>
+                        <label class="form-check-label" for="jobNinja"><img class="icon32 job32 Ninja"> 닌</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="jobSamurai" checked>
+                        <label class="form-check-label" for="jobSamurai"><img class="icon32 job32 Samurai"> 사</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="jobReaper" checked>
+                        <label class="form-check-label" for="jobReaper"><img class="icon32 job32 Reaper"> 리</label>
+                    </div>
+                </div>
+                <div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="jobBard" checked>
+                        <label class="form-check-label" for="jobBard"><img class="icon32 job32 Bard"> 음</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="jobMachinist" checked>
+                        <label class="form-check-label" for="jobMachinist"><img class="icon32 job32 Machinist"> 기</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="jobDancer" checked>
+                        <label class="form-check-label" for="jobDancer"><img class="icon32 job32 Dancer"> 무</label>
+                    </div>
+                </div>
+                <div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="jobBlackMage" checked>
+                        <label class="form-check-label" for="jobBlackMage"><img class="icon32 job32 BlackMage"> 흑</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="jobSummoner" checked>
+                        <label class="form-check-label" for="jobSummoner"><img class="icon32 job32 Summoner"> 소</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="jobRedMage" checked>
+                        <label class="form-check-label" for="jobRedMage"><img class="icon32 job32 RedMage"> 적</label>
                     </div>
                 </div>
             </div>
