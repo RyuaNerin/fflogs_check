@@ -16,6 +16,8 @@ type Statistic struct {
 	CharServer string `json:"char_server"`
 	CharRegion string `json:"char_region"`
 
+	FFLogsLink string `json:"fflogs_link"`
+
 	Jobs    []*StatisticJob          `json:"jobs"`
 	jobsMap map[string]*StatisticJob `json:"-"`
 

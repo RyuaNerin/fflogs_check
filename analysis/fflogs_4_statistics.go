@@ -1,6 +1,7 @@
 package analysis
 
 import (
+	"fmt"
 	"log"
 	"time"
 )
@@ -30,6 +31,13 @@ func (inst *analysisInstance) buildReport() (stat *Statistic) {
 		ID:      0,
 		Name:    "종합",
 		jobsMap: make(map[string]*StatisticEncounterJob, len(inst.InpCharJobs)),
+	}
+
+	switch inst.InpCharRegion {
+	case "kr":
+		stat.FFLogsLink = fmt.Sprintf("https://ko.fflogs.com/character/id/%d", inst.charID)
+	default:
+		stat.FFLogsLink = fmt.Sprintf("https://www.fflogs.com/character/id/%d", inst.charID)
 	}
 
 	// stat 계산

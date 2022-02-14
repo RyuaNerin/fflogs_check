@@ -2,17 +2,22 @@
 
 <div class="mb-3">{{ $.UpdatedAt }} 기준</div>
 
-{{ if eq $.State "hidden" }}
-<div class="alert alert-danger" role="alert">
-    비공개 캐릭터입니다.
-</div>
-{{ else if eq $.State "notfound" }}
+{{ if eq $.State "notfound" }}
 <div class="alert alert-danger" role="alert">
     캐릭터를 찾을 수 없습니다.
 </div>
 {{ else if eq $.State "invalid" }}
 <div class="alert alert-danger" role="alert">
     잘못된 요청입니다.
+</div>
+{{ else }}
+<div>
+    <a href="{{ $.FFLogsLink }}" class="text-decoration-none fw-bold" target="_blank">FFLogs 열기</a>
+</div>
+
+{{ if eq $.State "hidden" }}
+<div class="alert alert-danger" role="alert">
+    비공개 캐릭터입니다.
 </div>
 {{ else }}
 <div id="accordion" class="accordion">
@@ -243,4 +248,5 @@
     </div>
     {{ end }}
 </div>
-{{end}}
+{{ end }}
+{{ end }}

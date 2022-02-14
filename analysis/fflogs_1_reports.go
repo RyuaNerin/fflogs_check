@@ -21,9 +21,10 @@ func (inst *analysisInstance) updateReports() bool {
 				Name string `json:"name"`
 			} `json:"worldData"`
 			CharacterData struct {
-				CharHidden *struct {
+				CharData *struct {
+					ID     int  `json:"id"`
 					Hidden bool `json:"hidden"`
-				} `json:"char_hidden"`
+				} `json:"char"`
 				CharEncounter map[string]struct {
 					Ranks []struct {
 						Spec   string `json:"spec"`
@@ -44,16 +45,17 @@ func (inst *analysisInstance) updateReports() bool {
 		return false
 	}
 
-	if resp.Data.CharacterData.CharHidden == nil {
+	if resp.Data.CharacterData.CharData == nil {
 		inst.charState = StatisticStateNotFound
 		return true
 	}
 
-	if resp.Data.CharacterData.CharHidden.Hidden {
+	if resp.Data.CharacterData.CharData.Hidden {
 		inst.charState = StatisticStateHidden
 		return true
 	}
 
+	inst.charID = resp.Data.CharacterData.CharData.ID
 	inst.charState = StatisticStateNormal
 
 	for _, encData := range resp.Data.WorldData {

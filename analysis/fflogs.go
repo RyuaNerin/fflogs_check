@@ -45,6 +45,8 @@ type analysisInstance struct {
 
 	charState string
 
+	charID int
+
 	Reports map[string]*analysisReport
 	Fights  map[fightKey]*analysisFight
 

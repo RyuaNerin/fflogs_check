@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"hash/fnv"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 
@@ -27,8 +26,7 @@ func cleanUpWithHash(dir string, dirForHash ...string) {
 		}
 		defer fs.Close()
 
-		r, err := fs.Read(b)
-		log.Println(r)
+		_, err = fs.Read(b)
 		if err != nil && err != io.EOF {
 			sentry.CaptureException(err)
 			return newHash + 1
