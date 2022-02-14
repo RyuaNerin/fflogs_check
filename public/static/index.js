@@ -1,12 +1,14 @@
 let ENCOUNTER_REQUEST_DATA = {
-    'eden': [ 73, 74, 75, 76, 77, ],
+    'asphodelos': [ 78, 79, 80, 81, 82, ],
+    'ultimate_6':  [ 1060, 1061, 1062 ],
+    'eden_promise': [ 73, 74, 75, 76, 77, ],
     'ultimate':  [ 1047, 1048, 1050 ],
 };
 
 let ALL_JOBS = [
     "Paladin", "Warrior", "DarkKnight", "Gunbreaker", 
-    "WhiteMage", "Scholar", "Astrologian", /* "Sage", */ 
-    "Monk", "Dragoon", "Ninja", "Samurai", /* "Reaper", */ 
+    "WhiteMage", "Scholar", "Astrologian", "Sage",
+    "Monk", "Dragoon", "Ninja", "Samurai", "Reaper",
     "Bard", "Machinist", "Dancer", 
     "BlackMage", "Summoner", "RedMage",
 ];
@@ -46,10 +48,14 @@ document.addEventListener(
 
                                 let encounter = document.querySelector('input[name="encounter"]:checked').value;
 
+                                let m = /^(..)_(.+)$/.exec(document.getElementById('charServer').value);
+                                let region = m[1];
+                                let server = m[2];
+
                                 let requestData = {
                                     'char_name'   : document.getElementById('charName').value,
-                                    'char_server' : document.getElementById('charServer').value,
-                                    'char_region' : "kr",
+                                    'char_server' : server,
+                                    'char_region' : region,
                                     'encounters'  : ENCOUNTER_REQUEST_DATA[encounter],
                                     'partitions'  : document.getElementById('includeEcho').checked ? [ 17 ] : null,
                                     'jobs'        : jobs,
