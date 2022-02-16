@@ -64,7 +64,8 @@ type StatisticEncounterJob struct {
 type StatisticSkill struct {
 	Info BuffSkillInfo `json:"info"`
 
-	Usage    StatisticSkillUsage    `json:"usage"`    // 사용 횟수
+	Usage StatisticSkillUsage `json:"usage"` // 사용 횟수
+
 	Cooldown StatisticSkillCooldown `json:"cooldown"` //쿨타임이였던 시간
 }
 type BuffSkillInfo struct {

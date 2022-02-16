@@ -1,9 +1,6 @@
 package analysis
 
 import (
-	"log"
-	"math"
-
 	"ffxiv_check/ffxiv"
 )
 
@@ -98,10 +95,9 @@ func (inst *analysisInstance) buildReportCaclPrepare(stat *Statistic) {
 				var cooldown float64 = 0
 				if fightSkillData.MaxForPercent > 0 {
 					cooldown = float64(fightSkillData.UsedForPercent) / float64(fightSkillData.MaxForPercent) * 100
-				}
-
-				if math.IsNaN(cooldown) {
-					log.Println("fffffffffffffffff")
+					if cooldown > 100 {
+						cooldown = 100
+					}
 				}
 
 				encCurJobSkill.Cooldown.data = append(encCurJobSkill.Cooldown.data, float32(cooldown))
