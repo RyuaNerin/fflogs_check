@@ -1,10 +1,3 @@
-let ENCOUNTER_REQUEST_DATA = {
-    'asphodelos': [ 78, 79, 80, 81, 82, ],
-    'ultimate_6':  [ 1060, 1061, 1062 ],
-    'eden_promise': [ 73, 74, 75, 76, 77, ],
-    'ultimate':  [ 1047, 1048, 1050 ],
-};
-
 let ALL_JOBS = [
     "Paladin", "Warrior", "DarkKnight", "Gunbreaker", 
     "WhiteMage", "Scholar", "Astrologian", "Sage",
@@ -18,7 +11,7 @@ let SPINNER = `
     <span class="visually-hidden">Loading...</span>
 </div>`;
 
-function showSimpleChange(sourceClass, targetClass) {
+function genShowSimpleChange(sourceClass, targetClass) {
     return function() {
         let checked = document.getElementById(sourceClass).checked;
         let elems = document.getElementsByClassName(targetClass);
@@ -32,29 +25,11 @@ function showSimpleChange(sourceClass, targetClass) {
         }
     }
 }
-function showDpsHps(sourceClass, targetRegularClass, targetEchoClass) {
-    return function () {
-        let checked = document.getElementById(sourceClass).checked;
-        let elemsReular = document.getElementsByClassName(targetRegularClass);
-        let elemsEcho   = document.getElementsByClassName(targetEchoClass);
-        
-        for (let i = 0; i < elemsReular.length; i++) {
-            if (checked) {
-                elemsReular[i].classList.remove('d-none');
-            } else {
-                elemsReular[i].classList.add('d-none');
-            }
-        }
-        
-        for (let i = 0; i < elemsEcho.length; i++) {
-            if (checked) {
-                elemsEcho[i].classList.remove('d-none');
-            } else {
-                elemsEcho[i].classList.add('d-none');
-            }
-        }
-    }
-}
+
+let showScoreChanged = genShowSimpleChange('showScore', 'score');
+let showKillsChanged = genShowSimpleChange('showKills', 'kills');
+let showDpsChanged   = genShowSimpleChange('showDps'  , 'dps'  );
+let showHpsChanged   = genShowSimpleChange('showHps'  , 'hps'  );
 
 document.addEventListener(
     'DOMContentLoaded',
@@ -84,7 +59,19 @@ document.addEventListener(
                                     }
                                 });
 
-                                let encounter = document.querySelector('input[name="encounter"]:checked').value;
+                                let preset = '';
+                                switch (document.querySelector('input[name="encounter"]:checked').value) {
+                                case 'asphodelos': preset: "6.0"; break;
+                                case 'ultimate_6': preset: "6_ulti"; break;
+                                case 'ultimate_5': preset: "5_ulti"; break;
+
+                                case 'eden_promise':
+                                    preset =
+                                        document.getElementById('includeEcho').checked
+                                        ? "5.4_echo"
+                                        : "5.4"
+                                    break;
+                                }
 
                                 let m = /^(..)_(.+)$/.exec(document.getElementById('charServer').value);
                                 let region = m[1];
@@ -94,8 +81,7 @@ document.addEventListener(
                                     'char_name'   : document.getElementById('charName').value,
                                     'char_server' : server,
                                     'char_region' : region,
-                                    'encounters'  : ENCOUNTER_REQUEST_DATA[encounter],
-                                    'partitions'  : document.getElementById('includeEcho').checked ? [ 17 ] : null,
+                                    'preset'      : preset,
                                     'jobs'        : jobs,
                                 };
                                 
@@ -151,14 +137,18 @@ document.addEventListener(
                                         case "complete":
                                             content.innerHTML = resp.data;
 
-                                            showSimpleChange('showScore', 'score');
-                                            showSimpleChange('showKills', 'kills');
+                                            try {
+                                                showScoreChanged();
+                                                showKillsChanged();
+                                                showDpsChanged();
+                                                showHpsChanged();
 
-                                            document.getElementById('showScore').addEventListener('change', showSimpleChange('showScore', 'score'));
-                                            document.getElementById('showKills').addEventListener('change', showSimpleChange('showKills', 'kills'));
-
-                                            document.getElementById('showDps' ).addEventListener('change', showDpsHps('showDps', 'dps', 'dps_echo'));
-                                            document.getElementById('showHps' ).addEventListener('change', showDpsHps('showHps', 'hps', 'hps_echo'));
+                                                document.getElementById('showScore').addEventListener('change', showScoreChanged);
+                                                document.getElementById('showKills').addEventListener('change', showKillsChanged);    
+                                                document.getElementById('showDps'  ).addEventListener('change', showDpsChanged  );
+                                                document.getElementById('showHps'  ).addEventListener('change', showHpsChanged  );
+                                            } catch {
+                                            }
 
                                             ok = true;
                                             break;

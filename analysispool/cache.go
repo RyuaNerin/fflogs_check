@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"sort"
+	"strings"
 	"time"
 	"unicode"
 	"unicode/utf8"
@@ -61,8 +62,14 @@ func getOptionHash(ao *analysis.AnalyzeOptions) uint64 {
 		ao.Encouters, "|",
 		ao.AdditionalPartitions, "|",
 	)
-	for _, jobs := range ao.Jobs {
-		append(jobs)
+
+	jobs := make([]string, len(ao.Jobs))
+	copy(jobs, ao.Jobs)
+	for i := range jobs {
+		jobs[i] = strings.ToLower(jobs[i])
+	}
+	for _, job := range jobs {
+		fmt.Fprint(h, job, "|")
 	}
 
 	return h.Sum64()

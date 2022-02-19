@@ -22,8 +22,17 @@ var (
 	queueWake = make(chan struct{}, 1)
 )
 
+type options struct {
+	CharName   string   `json:"char_name"`
+	CharServer string   `json:"char_server"`
+	CharRegion string   `json:"char_region"`
+	Preset     string   `json:"preset"`
+	Jobs       []string `json:"jobs"`
+}
+
 type queueData struct {
-	opt analysis.AnalyzeOptions // 설정
+	reqOpt      options
+	analysisOpt analysis.AnalyzeOptions
 
 	ws        *websocket.Conn
 	ctx       context.Context
@@ -74,14 +83,14 @@ func queueWorker() {
 			continue
 		}
 
-		log.Printf("Start: %s@%s", q.opt.CharName, q.opt.CharServer)
+		log.Printf("Start: %s@%s", q.analysisOpt.CharName, q.analysisOpt.CharServer)
 		q.Start()
 		resp, ok := analysis.Analyze(
 			q.ctx,
 			q.Progress,
-			&q.opt,
+			&q.analysisOpt,
 		)
-		log.Printf("End: %s@%s", q.opt.CharName, q.opt.CharServer)
+		log.Printf("End: %s@%s", q.analysisOpt.CharName, q.analysisOpt.CharServer)
 		if ok {
 			q.chanResp <- resp
 		} else {

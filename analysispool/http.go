@@ -24,7 +24,7 @@ var (
 	websockEmptyClosure = websocket.FormatCloseMessage(websocket.CloseNormalClosure, "")
 )
 
-func checkOptionValidation(ao *analysis.AnalyzeOptions) bool {
+func checkOptionValidation(ao *options) bool {
 	ao.CharName = strings.TrimSpace(ao.CharName)
 	ao.CharServer = strings.TrimSpace(ao.CharServer)
 	ao.CharRegion = strings.TrimSpace(ao.CharRegion)
@@ -40,9 +40,6 @@ func checkOptionValidation(ao *analysis.AnalyzeOptions) bool {
 	case lenCharServer > 10:
 	case lenCharRegion < 2:
 	case lenCharRegion > 5:
-	case len(ao.Encouters) == 0:
-	case len(ao.Encouters) > 5:
-	case len(ao.AdditionalPartitions) > 5:
 	case len(ao.Jobs) == 0:
 	case len(ao.Jobs) > len(ffxiv.JobOrder):
 	default:
@@ -76,7 +73,7 @@ func Do(ctx context.Context, ws *websocket.Conn) {
 		chanResp:  make(chan *analysis.Statistic),
 	}
 
-	err = ws.ReadJSON(&q.opt)
+	err = ws.ReadJSON(&q.reqOpt)
 	if err != nil {
 		sentry.CaptureException(err)
 		fmt.Printf("%+v\n", errors.WithStack(err))
@@ -96,11 +93,15 @@ func Do(ctx context.Context, ws *websocket.Conn) {
 		}
 	}()
 
-	if !checkOptionValidation(&q.opt) {
+	preset, ok := presets[q.reqOpt.Preset]
+	if ok {
+		ok = checkOptionValidation(&q.reqOpt)
+	}
+	if !ok {
 		stat := analysis.Statistic{
-			CharName:   q.opt.CharName,
-			CharServer: q.opt.CharServer,
-			CharRegion: q.opt.CharRegion,
+			CharName:   q.reqOpt.CharName,
+			CharServer: q.reqOpt.CharServer,
+			CharRegion: q.reqOpt.CharRegion,
 			UpdatedAt:  time.Now().Format("2006-01-02 15:04:05"),
 			State:      analysis.StatisticStateInvalid,
 		}
@@ -110,7 +111,15 @@ func Do(ctx context.Context, ws *websocket.Conn) {
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	h := getOptionHash(&q.opt)
+	q.analysisOpt = analysis.AnalyzeOptions{
+		CharName:             q.reqOpt.CharName,
+		CharServer:           q.reqOpt.CharServer,
+		CharRegion:           q.reqOpt.CharRegion,
+		Encouters:            preset.Enc,
+		AdditionalPartitions: preset.Part,
+		Jobs:                 q.reqOpt.Jobs,
+	}
+	h := getOptionHash(&q.analysisOpt)
 
 	var stat *analysis.Statistic
 	if csStatistics.Load(h, &stat) {

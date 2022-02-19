@@ -43,7 +43,7 @@
         >
             <div class="accordion-body">
                 <div class="form-check form-check-inline mb-3">
-                    <input class="form-check-input" type="checkbox" id="showDps" checked>
+                    <input class="form-check-input" type="checkbox" id="showDps">
                     <label class="form-check-label" for="showDps"><img class="img img-dps"> DPS 최대값 표시</label>
                 </div>
                 <div class="form-check form-check-inline mb-3">
@@ -81,8 +81,8 @@
                             <th scope="row">종합</th>
                             {{ range $i, $job := $.Jobs }}
                                 <td class="text-start">
-                                    <div class="dps d-none"></div>
-                                    <div class="hps d-none"></div>
+                                    <div class="dps"></div>
+                                    <div class="hps"></div>
 
                                     {{      if ge $job.Score 70.0 }} <div class="score text-primary"><img class="img img-score"> {{ fn $job.Score }}</div>
                                     {{ else if ge $job.Score 50.0 }} <div class="score text-success"><img class="img img-score"> {{ fn $job.Score }}</div>
@@ -90,7 +90,7 @@
                                     {{ else                       }} <div class="score text-danger" ><img class="img img-score"> {{ fn $job.Score }}</div>
                                     {{ end                        }}
 
-                                    <div class="kills d-none"><img class="img img-kills"> {{ fn $job.Kills }}</div>
+                                    <div class="kills"><img class="img img-kills"> {{ fn $job.Kills }}</div>
                                 </td>
                             {{ end }}
                         </tr>
@@ -104,8 +104,8 @@
                             {{ range $ii, $jobTarget := $.Jobs }}
                             <td class="text-start">
                                 {{ if eq $jobTarget.ID 0 }}
-                                    <div class="dps d-none"></div>
-                                    <div class="hp d-nones"></div>
+                                    <div class="dps"></div>
+                                    <div class="hps"></div>
 
                                     {{      if ge $enc.Score 70.0 }}<div class="score text-primary"><img class="img img-score"> {{ fn $enc.Score }}</div>
                                     {{ else if ge $enc.Score 50.0 }}<div class="score text-success"><img class="img img-score"> {{ fn $enc.Score }}</div>
@@ -113,7 +113,7 @@
                                     {{ else                       }}<div class="score text-danger" ><img class="img img-score"> {{ fn $enc.Score }}</div>
                                     {{ end                        }}
 
-                                    <div class="kills d-none"><img class="img img-kills"> {{ fn $enc.Kills }}</div>
+                                    <div class="kills"><img class="img img-kills"> {{ fn $enc.Kills }}</div>
                                 {{ else }}
                                     {{ range $iii, $job := $enc.Jobs }}
                                         {{ if eq $jobTarget.ID $job.ID }}
@@ -127,14 +127,14 @@
                                             {{ else                           }}<div class="dps "    ><img class="img img-dps">                       </div>
                                             {{ end }}
                                             
-                                            {{      if eq $job.Rank.Hps 100.0 }}<div class="hps d-none r100"><img class="img img-hps"> {{ fn $job.Rank.Hps }}</div>
-                                            {{ else if ge $job.Rank.Hps  99.0 }}<div class="hps d-none r99" ><img class="img img-hps"> {{ fn $job.Rank.Hps }}</div>
-                                            {{ else if ge $job.Rank.Hps  95.0 }}<div class="hps d-none r95" ><img class="img img-hps"> {{ fn $job.Rank.Hps }}</div>
-                                            {{ else if ge $job.Rank.Hps  75.0 }}<div class="hps d-none r75" ><img class="img img-hps"> {{ fn $job.Rank.Hps }}</div>
-                                            {{ else if ge $job.Rank.Hps  50.0 }}<div class="hps d-none r50" ><img class="img img-hps"> {{ fn $job.Rank.Hps }}</div>
-                                            {{ else if ge $job.Rank.Hps  25.0 }}<div class="hps d-none r25" ><img class="img img-hps"> {{ fn $job.Rank.Hps }}</div>
-                                            {{ else if ge $job.Rank.Hps   0.0 }}<div class="hps d-none r0"  ><img class="img img-hps"> {{ fn $job.Rank.Hps }}</div>
-                                            {{ else                           }}<div class="hps d-none"     ><img class="img img-hps">                       </div>
+                                            {{      if eq $job.Rank.Hps 100.0 }}<div class="hps r100"><img class="img img-hps"> {{ fn $job.Rank.Hps }}</div>
+                                            {{ else if ge $job.Rank.Hps  99.0 }}<div class="hps r99" ><img class="img img-hps"> {{ fn $job.Rank.Hps }}</div>
+                                            {{ else if ge $job.Rank.Hps  95.0 }}<div class="hps r95" ><img class="img img-hps"> {{ fn $job.Rank.Hps }}</div>
+                                            {{ else if ge $job.Rank.Hps  75.0 }}<div class="hps r75" ><img class="img img-hps"> {{ fn $job.Rank.Hps }}</div>
+                                            {{ else if ge $job.Rank.Hps  50.0 }}<div class="hps r50" ><img class="img img-hps"> {{ fn $job.Rank.Hps }}</div>
+                                            {{ else if ge $job.Rank.Hps  25.0 }}<div class="hps r25" ><img class="img img-hps"> {{ fn $job.Rank.Hps }}</div>
+                                            {{ else if ge $job.Rank.Hps   0.0 }}<div class="hps r0"  ><img class="img img-hps"> {{ fn $job.Rank.Hps }}</div>
+                                            {{ else                           }}<div class="hps"     ><img class="img img-hps">                       </div>
                                             {{ end }}
                                             
                                             {{      if ge $job.Score 70.0 }}<div class="score text-primary"><img class="img img-score"> {{ fn $job.Score }}</div>
@@ -143,7 +143,7 @@
                                             {{ else                       }}<div class="score text-danger" ><img class="img img-score"> {{ fn $job.Score }}</div>
                                             {{ end                        }}
 
-                                            <div class="kills d-none"><img class="img img-kills"> {{ fn $job.Kills }}</div>
+                                            <div class="kills"><img class="img img-kills"> {{ fn $job.Kills }}</div>
                                         {{ end }}
                                     {{ end }}
                                 {{ end }}
