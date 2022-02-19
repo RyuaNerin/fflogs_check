@@ -43,6 +43,7 @@ func (inst *analysisInstance) buildReport() (stat *Statistic) {
 	// stat 계산
 	inst.buildReportCaclPrepare(stat)
 	inst.buildReportCalcStat(stat)
+	inst.buildReportCalcRank(stat)
 
 	// check NaN
 	inst.buildReportCheckNaN(stat)

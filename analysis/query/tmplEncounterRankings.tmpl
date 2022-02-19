@@ -14,9 +14,16 @@
 		}
 		char_encounter: character(name: "{{ $.InpCharName }}", serverSlug:"{{ $.InpCharServer }}", serverRegion: "{{ $.InpCharRegion }}") {
 			{{ range $encIDIndex, $encID := $.InpEncounterIDs }}
-			e_{{ $encID }}: encounterRankings(encounterID: {{ $encID }})
+			dps_{{ $encID }}: encounterRankings(encounterID: {{ $encID }})
 			{{ range $i, $part := $.InpAdditionalPartition }}
-			e{{ $i }}_{{ $encID }}: encounterRankings(encounterID: {{ $encID }}, partition: {{ $part }} )
+			dps_{{ $encID }}_{{ $i }}: encounterRankings(encounterID: {{ $encID }}, partition: {{ $part }} )
+			{{ end }}
+			{{ end }}
+			
+			{{ range $encIDIndex, $encID := $.InpEncounterIDs }}
+			hps_{{ $encID }}: encounterRankings(encounterID: {{ $encID }}, metric: hps)
+			{{ range $i, $part := $.InpAdditionalPartition }}
+			hps_{{ $encID }}_{{ $i }}: encounterRankings(encounterID: {{ $encID }}, partition: {{ $part }}, metric: hps)
 			{{ end }}
 			{{ end }}
 		}

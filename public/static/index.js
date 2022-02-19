@@ -18,6 +18,44 @@ let SPINNER = `
     <span class="visually-hidden">Loading...</span>
 </div>`;
 
+function showSimpleChange(sourceClass, targetClass) {
+    return function() {
+        let checked = document.getElementById(sourceClass).checked;
+        let elems = document.getElementsByClassName(targetClass);
+        
+        for (let i = 0; i < elems.length; i++) {
+            if (checked) {
+                elems[i].classList.remove('d-none');
+            } else {
+                elems[i].classList.add('d-none');
+            }
+        }
+    }
+}
+function showDpsHps(sourceClass, targetRegularClass, targetEchoClass) {
+    return function () {
+        let checked = document.getElementById(sourceClass).checked;
+        let elemsReular = document.getElementsByClassName(targetRegularClass);
+        let elemsEcho   = document.getElementsByClassName(targetEchoClass);
+        
+        for (let i = 0; i < elemsReular.length; i++) {
+            if (checked) {
+                elemsReular[i].classList.remove('d-none');
+            } else {
+                elemsReular[i].classList.add('d-none');
+            }
+        }
+        
+        for (let i = 0; i < elemsEcho.length; i++) {
+            if (checked) {
+                elemsEcho[i].classList.remove('d-none');
+            } else {
+                elemsEcho[i].classList.add('d-none');
+            }
+        }
+    }
+}
+
 document.addEventListener(
     'DOMContentLoaded',
     function () {
@@ -112,6 +150,16 @@ document.addEventListener(
                                             break;
                                         case "complete":
                                             content.innerHTML = resp.data;
+
+                                            showSimpleChange('showScore', 'score');
+                                            showSimpleChange('showKills', 'kills');
+
+                                            document.getElementById('showScore').addEventListener('change', showSimpleChange('showScore', 'score'));
+                                            document.getElementById('showKills').addEventListener('change', showSimpleChange('showKills', 'kills'));
+
+                                            document.getElementById('showDps' ).addEventListener('change', showDpsHps('showDps', 'dps', 'dps_echo'));
+                                            document.getElementById('showHps' ).addEventListener('change', showDpsHps('showHps', 'hps', 'hps_echo'));
+
                                             ok = true;
                                             break;
                                     }

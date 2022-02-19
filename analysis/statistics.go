@@ -52,6 +52,8 @@ type StatisticEncounterJob struct {
 	ID  int    `json:"id"`
 	Job string `json:"job"`
 
+	Rank StatisticRank `json:"rank"`
+
 	Kills      int     `json:"kills"`
 	Score      float32 `json:"score"`
 	scoreSum   float64 `json:"-"`
@@ -87,4 +89,9 @@ type StatisticSkillCooldown struct {
 	data []float32 `json:"-"`
 	Avg  float32   `json:"avg"`
 	Med  float32   `json:"med"`
+}
+
+type StatisticRank struct {
+	Dps float32 `json:"dps"`
+	Hps float32 `json:"hps"`
 }

@@ -51,6 +51,7 @@ func Analyze(ctx context.Context, progress func(p string), opt *AnalyzeOptions) 
 		Fights:  make(map[fightKey]*analysisFight),
 
 		encounterNames: make(map[int]string, len(opt.Encouters)),
+		encounterRanks: make(map[int]*analysisRank, 1+len(opt.Jobs)),
 
 		progressString: make(chan string),
 	}

@@ -114,3 +114,51 @@
 .icon32.job32.Sage {
     content:url("img/Sage_Icon_3__32.png");
 }
+
+.img {
+    width: 1em;
+    height: 1em;
+}
+.img.img-dps {
+    content:url("img/Melee_DPS_Icon_Flat_1.png");
+}
+.img.img-hps {
+    content:url("img/Healer_Icon_Flat_1.png");
+}
+.img.img-score {
+    content:url("img/Player9_Icon.png");
+}
+.img.img-kills {
+    content:url("img/20px-Huntmobicon.png");
+}
+
+.r100 {
+    color: #FDD835!important;
+    font-weight: 600;
+}
+
+.r99 {
+    color: #F06292!important;
+    font-weight: 600;
+}
+
+.r95 {
+    color: #F57C00!important;
+    font-weight: 600;
+}
+
+.r75 {
+    color: #8E24AA!important;
+}
+
+.r50 {
+    color: #2196F3!important;
+}
+
+.r25 {
+    color: #4CAF50!important;
+}
+
+.r0 {
+    color: #9E9E9E!important;
+}

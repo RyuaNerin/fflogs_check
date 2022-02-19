@@ -34,7 +34,7 @@ func checkOptionValidation(ao *analysis.AnalyzeOptions) bool {
 	lenCharRegion := utf8.RuneCountInString(ao.CharRegion)
 
 	switch {
-	case lenCharName < 3:
+	case lenCharName < 2:
 	case lenCharName > 20:
 	case lenCharServer < 3:
 	case lenCharServer > 10:

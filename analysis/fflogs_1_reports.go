@@ -3,11 +3,16 @@ package analysis
 import (
 	"fmt"
 	"log"
+	"regexp"
 	"sort"
 	"strconv"
 
 	"github.com/getsentry/sentry-go"
 	"github.com/pkg/errors"
+)
+
+var (
+	reCharacter = regexp.MustCompile(`^([^_]+)_(\d+)(_\d+)?$`)
 )
 
 func (inst *analysisInstance) updateReports() bool {
@@ -27,8 +32,10 @@ func (inst *analysisInstance) updateReports() bool {
 				} `json:"char"`
 				CharEncounter map[string]struct {
 					Ranks []struct {
-						Spec   string `json:"spec"`
-						Report struct {
+						RankPercent float64 `json:"rankPercent"`
+						Amount      float64 `json:"amount"`
+						Spec        string  `json:"spec"`
+						Report      struct {
 							Code    string `json:"code"`
 							FightID int    `json:"fightID"`
 						} `json:"report"`
@@ -62,18 +69,55 @@ func (inst *analysisInstance) updateReports() bool {
 		inst.encounterNames[encData.ID] = encData.Name
 	}
 
-	for key, value := range resp.Data.CharacterData.CharEncounter {
-		encStr := reEnc.FindStringSubmatch(key)
-		if len(encStr) != 2 {
+	addRank := func(job string, arrSize int, encId int, isDps bool, rank float32, amount float32) {
+		rankJob, ok := inst.encounterRanks[encId]
+		if !ok {
+			rankJob = &analysisRank{
+				Dps: make(map[string]*analysisRankData, 1+len(inst.InpCharJobs)),
+				Hps: make(map[string]*analysisRankData, 1+len(inst.InpCharJobs)),
+			}
+			inst.encounterRanks[encId] = rankJob
+		}
+
+		d := rankJob.Dps
+		if !isDps {
+			d = rankJob.Hps
+		}
+
+		rankData, ok := d[job]
+		if !ok {
+			rankData = &analysisRankData{
+				Data: make([]fflogsRankData, 0, arrSize),
+			}
+			d[job] = rankData
+		}
+
+		v := fflogsRankData{
+			Rank:   float32(rank),
+			Amount: float32(amount),
+		}
+
+		rankData.Data = append(rankData.Data, v)
+	}
+
+	for key, charData := range resp.Data.CharacterData.CharEncounter {
+		encStr := reCharacter.FindStringSubmatch(key)
+		if len(encStr) != 4 {
 			continue
 		}
 
-		encId, err := strconv.Atoi(encStr[1])
+		isDps := encStr[1] == "dps"
+
+		encId, err := strconv.Atoi(encStr[2])
 		if err != nil {
 			continue
 		}
 
-		for _, rank := range value.Ranks {
+		for _, rank := range charData.Ranks {
+			addRank(rank.Spec, len(charData.Ranks), encId, isDps, float32(rank.RankPercent), float32(rank.Amount))
+
+			////////////////////////////////////////////////////////////////////////////////
+
 			report, ok := inst.Reports[rank.Report.Code]
 			if !ok {
 				report = &analysisReport{
@@ -82,20 +126,22 @@ func (inst *analysisInstance) updateReports() bool {
 				inst.Reports[rank.Report.Code] = report
 			}
 
-			key := fightKey{
-				ReportID: rank.Report.Code,
-				FightID:  rank.Report.FightID,
-			}
-			value := &analysisFight{
-				ReportID:    rank.Report.Code,
-				FightID:     rank.Report.FightID,
-				Job:         rank.Spec,
-				EncounterID: encId,
-				skillData:   make(map[int]*analysisFightSkill),
-			}
+			if isDps {
+				key := fightKey{
+					ReportID: rank.Report.Code,
+					FightID:  rank.Report.FightID,
+				}
+				value := &analysisFight{
+					ReportID:    rank.Report.Code,
+					FightID:     rank.Report.FightID,
+					Job:         rank.Spec,
+					EncounterID: encId,
+					skillData:   make(map[int]*analysisFightSkill),
+				}
 
-			inst.Fights[key] = value
-			report.Fights = append(report.Fights, value)
+				inst.Fights[key] = value
+				report.Fights = append(report.Fights, value)
+			}
 		}
 	}
 

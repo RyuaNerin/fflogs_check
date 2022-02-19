@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"regexp"
 	"strings"
 	"sync"
 	"text/template"
@@ -51,6 +50,7 @@ type analysisInstance struct {
 	Fights  map[fightKey]*analysisFight
 
 	encounterNames map[int]string
+	encounterRanks map[int]*analysisRank
 
 	progressString chan string
 
@@ -109,10 +109,20 @@ type analysisFightSkill struct {
 	UsedForPercent int // 쿨 공유하는거 최대 사용 횟수 맞추기 위한 수...
 	MaxForPercent  int
 }
+type analysisRank struct {
+	Dps map[string]*analysisRankData
+	Hps map[string]*analysisRankData
+}
+type analysisRankData struct {
+	Data []fflogsRankData
+	Echo []fflogsRankData
+}
+type fflogsRankData struct {
+	Rank   float32
+	Amount float32
+}
 
 var (
-	reEnc = regexp.MustCompile(`^e[^_]*_?(\d+)$`)
-
 	sbPool = sync.Pool{
 		New: func() interface{} {
 			sb := new(strings.Builder)
@@ -149,7 +159,10 @@ func (inst *analysisInstance) try(f func() error) (err error) {
 }
 
 func (inst *analysisInstance) progress(format string, args ...interface{}) {
-	inst.progressString <- fmt.Sprintf(format, args...)
+	select {
+	case <-inst.ctx.Done():
+	case inst.progressString <- fmt.Sprintf(format, args...):
+	}
 }
 
 func (inst *analysisInstance) callGraphQl(ctx context.Context, tmpl *template.Template, tmplData interface{}, respData interface{}) error {
