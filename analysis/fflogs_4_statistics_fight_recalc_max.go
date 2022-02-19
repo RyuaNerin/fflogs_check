@@ -105,6 +105,15 @@ func (inst *analysisInstance) buildReportFightRecalcMaxUsing() {
 			if isGlobal {
 				setDefaultCharge(fightData, 16556, 2) // 천궁의 교차 2회
 				setDefaultCharge(fightData, 3590, 2)  // 점지 2회
+
+				// 점지 3회 = Astrodyne 1회
+				sd3590, ok := fightData.skillData[3590]
+				if ok {
+					sd25870, ok := fightData.skillData[25870] //Astrodyne
+					if ok {
+						sd25870.MaxForPercent = sd3590.Used / 3
+					}
+				}
 			}
 
 		case "Sage":
