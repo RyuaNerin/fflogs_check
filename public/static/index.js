@@ -61,9 +61,9 @@ document.addEventListener(
 
                                 let preset = '';
                                 switch (document.querySelector('input[name="encounter"]:checked').value) {
-                                case 'asphodelos': preset: "6.0"; break;
-                                case 'ultimate_6': preset: "6_ulti"; break;
-                                case 'ultimate_5': preset: "5_ulti"; break;
+                                case 'asphodelos': preset = "6.0"; break;
+                                case 'ultimate_6': preset = "6_ulti"; break;
+                                case 'ultimate_5': preset = "5_ulti"; break;
 
                                 case 'eden_promise':
                                     preset =
