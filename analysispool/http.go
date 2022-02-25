@@ -116,6 +116,7 @@ func Do(ctx context.Context, ws *websocket.Conn) {
 		CharServer:           q.reqOpt.CharServer,
 		CharRegion:           q.reqOpt.CharRegion,
 		Encouters:            preset.Enc,
+		Difficulty:           preset.Diff,
 		AdditionalPartitions: preset.Part,
 		Jobs:                 q.reqOpt.Jobs,
 	}

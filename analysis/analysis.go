@@ -28,6 +28,7 @@ type AnalyzeOptions struct {
 	CharServer           string   `json:"char_server"`
 	CharRegion           string   `json:"char_region"`
 	Encouters            []int    `json:"encounters"`
+	Difficulty           int      `json:"difficulty"`
 	AdditionalPartitions []int    `json:"partitions"`
 	Jobs                 []string `json:"jobs"`
 }
@@ -46,6 +47,7 @@ func Analyze(ctx context.Context, progress func(p string), opt *AnalyzeOptions) 
 		InpCharRegion:   opt.CharRegion,
 		InpCharJobs:     make(map[string]bool, len(opt.Jobs)),
 		InpEncounterIDs: make([]int, len(opt.Encouters)),
+		InpDifficulty:   opt.Difficulty,
 
 		Reports: make(map[string]*analysisReport),
 		Fights:  make(map[fightKey]*analysisFight),

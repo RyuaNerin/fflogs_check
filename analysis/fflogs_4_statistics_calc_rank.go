@@ -28,7 +28,10 @@ func (inst *analysisInstance) buildReportCalcRank(stat *Statistic) {
 	for encId, dataEnc := range inst.encounterRanks {
 		// Dps
 		for job, dataEncJob := range dataEnc.Dps {
-			d := stat.encountersMap[encId].jobsMap[job]
+			d, ok := stat.encountersMap[encId].jobsMap[job]
+			if !ok {
+				continue
+			}
 
 			if order(dataEncJob.Data) {
 				d.Rank.Dps = dataEncJob.Data[0].Rank
@@ -39,7 +42,10 @@ func (inst *analysisInstance) buildReportCalcRank(stat *Statistic) {
 
 		// Hps
 		for job, dataEncJob := range dataEnc.Hps {
-			d := stat.encountersMap[encId].jobsMap[job]
+			d, ok := stat.encountersMap[encId].jobsMap[job]
+			if !ok {
+				continue
+			}
 
 			if order(dataEncJob.Data) {
 				d.Rank.Hps = dataEncJob.Data[len(dataEncJob.Data)/2].Rank

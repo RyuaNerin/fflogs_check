@@ -8,6 +8,7 @@ import (
 
 type preset struct {
 	Enc  []int `json:"enc"`
+	Diff int   `json:"diff"`
 	Part []int `json:"part"`
 }
 

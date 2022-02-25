@@ -14,16 +14,16 @@
 		}
 		char_encounter: character(name: "{{ $.InpCharName }}", serverSlug:"{{ $.InpCharServer }}", serverRegion: "{{ $.InpCharRegion }}") {
 			{{ range $encIDIndex, $encID := $.InpEncounterIDs }}
-			dps_{{ $encID }}: encounterRankings(encounterID: {{ $encID }})
+			dps_{{ $encID }}         : encounterRankings(encounterID: {{ $encID }}, includePrivateLogs: false, difficulty: {{ $.InpDifficulty }})
 			{{ range $i, $part := $.InpAdditionalPartition }}
-			dps_{{ $encID }}_{{ $i }}: encounterRankings(encounterID: {{ $encID }}, partition: {{ $part }} )
+			dps_{{ $encID }}_{{ $i }}: encounterRankings(encounterID: {{ $encID }}, includePrivateLogs: false, difficulty: {{ $.InpDifficulty }}, partition: {{ $part }} )
 			{{ end }}
 			{{ end }}
 			
 			{{ range $encIDIndex, $encID := $.InpEncounterIDs }}
-			hps_{{ $encID }}: encounterRankings(encounterID: {{ $encID }}, metric: hps)
+			hps_{{ $encID }}         : encounterRankings(encounterID: {{ $encID }}, includePrivateLogs: false, difficulty: {{ $.InpDifficulty }}, metric: hps)
 			{{ range $i, $part := $.InpAdditionalPartition }}
-			hps_{{ $encID }}_{{ $i }}: encounterRankings(encounterID: {{ $encID }}, partition: {{ $part }}, metric: hps)
+			hps_{{ $encID }}_{{ $i }}: encounterRankings(encounterID: {{ $encID }}, includePrivateLogs: false, difficulty: {{ $.InpDifficulty }}, metric: hps, partition: {{ $part }})
 			{{ end }}
 			{{ end }}
 		}

@@ -41,6 +41,7 @@ type analysisInstance struct {
 	InpAdditionalPartition []int
 	InpCharJobs            map[string]bool
 	InpEncounterIDs        []int
+	InpDifficulty          int `json:"difficulty"`
 
 	charState string
 
