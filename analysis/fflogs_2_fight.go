@@ -248,5 +248,5 @@ func (inst *analysisInstance) updateFights() bool {
 
 	progress()
 
-	return len(inst.Fights) > 0
+	return true
 }

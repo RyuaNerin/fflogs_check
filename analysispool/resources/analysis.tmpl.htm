@@ -19,6 +19,10 @@
 <div class="alert alert-danger" role="alert">
     비공개 캐릭터입니다.
 </div>
+{{ else if eq $.State "nolog" }}
+<div class="alert alert-danger" role="alert">
+    클리어 기록이 없습니다.
+</div>
 {{ else }}
 <div id="accordion" class="accordion">
     <div class="accordion-item">

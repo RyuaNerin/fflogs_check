@@ -5,6 +5,7 @@ const (
 	StatisticStateHidden   = "hidden"
 	StatisticStateNotFound = "notfound"
 	StatisticStateInvalid  = "invalid"
+	StatisticStateNoLog    = "nolog"
 )
 
 type Statistic struct {

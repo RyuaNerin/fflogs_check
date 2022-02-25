@@ -154,5 +154,10 @@ func (inst *analysisInstance) updateReports() bool {
 		)
 	}
 
-	return len(inst.Fights) > 0
+	if len(inst.Fights) == 0 {
+		inst.charState = StatisticStateNoLog
+		return true
+	}
+
+	return true
 }
