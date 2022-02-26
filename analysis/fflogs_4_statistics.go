@@ -10,7 +10,7 @@ func (inst *analysisInstance) buildReport() (stat *Statistic) {
 	log.Printf("buildReport %s@%s\n", inst.InpCharName, inst.InpCharServer)
 
 	inst.buildReportFight()
-	inst.buildReportFightRecalcMaxUsing()
+	inst.buildReportFightRecalc()
 
 	stat = &Statistic{
 		UpdatedAt: time.Now().Format("2006-01-02 15:04:05"),

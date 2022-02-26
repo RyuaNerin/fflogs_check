@@ -23,9 +23,9 @@ type Storage struct {
 	cleanUpLock sync.RWMutex
 }
 
-func NewStorage(dir string, expires time.Duration, hashDir ...string) *Storage {
-	if len(hashDir) == 0 {
-		panic("empty hashDir")
+func NewStorage(dir string, expires time.Duration, hashPath ...string) *Storage {
+	if len(hashPath) == 0 {
+		panic("empty hashDirOrFile")
 	}
 
 	s := &Storage{
@@ -33,7 +33,7 @@ func NewStorage(dir string, expires time.Duration, hashDir ...string) *Storage {
 		savingMap: make(map[uint64]struct{}, 16),
 	}
 
-	cleanUpWithHash(dir, hashDir...)
+	cleanUpWithHash(dir, hashPath...)
 
 	if expires != 0 {
 		go s.cleanup(expires)

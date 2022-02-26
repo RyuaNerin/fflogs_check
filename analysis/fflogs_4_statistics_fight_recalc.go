@@ -7,7 +7,7 @@ import (
 )
 
 // 최대 사용 가능한 횟수들 재 계산하는 부분...
-func (inst *analysisInstance) buildReportFightRecalcMaxUsing() {
+func (inst *analysisInstance) buildReportFightRecalc() {
 	set := func(fightData *analysisFight, max int, skillIds ...int) {
 		var sum int
 		for _, skillId := range skillIds {
@@ -101,6 +101,15 @@ func (inst *analysisInstance) buildReportFightRecalcMaxUsing() {
 
 		case "Astrologian":
 			setDefaultCharge(fightData, 16556, 2) // 위계 2회
+
+			// 낮별 밤별 헬리오스 합치기
+			a := fightData.skillData[3601]  // 낮별
+			b := fightData.skillData[17152] // 밤별
+
+			if a != nil && b != nil {
+				a.Used += b.Used
+				delete(fightData.skillData, 17152)
+			}
 
 			if isGlobal {
 				setDefaultCharge(fightData, 16556, 2) // 천궁의 교차 2회

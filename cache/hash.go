@@ -11,12 +11,12 @@ import (
 	"github.com/getsentry/sentry-go"
 )
 
-func cleanUpWithHash(dir string, dirForHash ...string) {
+func cleanUpWithHash(dir string, hashPath ...string) {
 	b := make([]byte, 4)
 
 	hashFile := filepath.Join(dir, "hash")
 
-	newHash := hashDir(dirForHash...)
+	newHash := hashDir(hashPath...)
 	oldHash := func() uint32 {
 		binary.BigEndian.PutUint32(b, newHash+1)
 
@@ -45,7 +45,7 @@ func cleanUpWithHash(dir string, dirForHash ...string) {
 	}
 }
 
-func hashDir(dir ...string) uint32 {
+func hashDir(pathList ...string) uint32 {
 	h := fnv.New32a()
 
 	read := func(path string) {
@@ -61,15 +61,14 @@ func hashDir(dir ...string) uint32 {
 	}
 
 	var walk func(dir string)
-
-	walk = func(dir string) {
-		fiList, err := os.ReadDir(dir)
+	walk = func(dirPath string) {
+		fiList, err := os.ReadDir(dirPath)
 		if err != nil {
 			panic(err)
 		}
 
 		for _, fi := range fiList {
-			path := filepath.Join(dir, fi.Name())
+			path := filepath.Join(dirPath, fi.Name())
 			fmt.Fprint(h, path)
 
 			if fi.IsDir() {
@@ -80,8 +79,16 @@ func hashDir(dir ...string) uint32 {
 		}
 	}
 
-	for _, d := range dir {
-		walk(d)
+	for _, path := range pathList {
+		stat, err := os.Stat(path)
+		if err != nil {
+			panic(err)
+		}
+		if stat.IsDir() {
+			walk(path)
+		} else {
+			read(path)
+		}
 	}
 
 	return h.Sum32()

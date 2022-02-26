@@ -8,8 +8,20 @@ import (
 )
 
 var (
-	csReport = cache.NewStorage("./_cachedata/report", 0, "./analysis")
-	csEvents = cache.NewStorage("./_cachedata/events", 0, "./analysis")
+	csReport = cache.NewStorage(
+		"./_cachedata/report",
+		0,
+		"./analysis/fflogs.go",
+		"./analysis/fflogs_2_fight.go",
+		"./analysis/query/tmplReportSummary.tmpl",
+	)
+	csEvents = cache.NewStorage(
+		"./_cachedata/events",
+		0,
+		"./analysis/fflogs.go",
+		"./analysis/fflogs_3_event.go",
+		"./analysis/query/tmplReportCastsEvents.tmpl",
+	)
 )
 
 func cacheReport(reportId string, fightIds string, r interface{}, saveMode bool) bool {

@@ -84,7 +84,10 @@ func (inst *analysisInstance) buildReportCaclPrepare(stat *Statistic) {
 			encCurJobSkill := getBuffUsage(encCurJob, skillInfo)
 			encAllJobSkill := getBuffUsage(encAllJob, skillInfo)
 
-			fightSkillData := fightData.skillData[skillId]
+			fightSkillData, ok := fightData.skillData[skillId]
+			if !ok {
+				continue
+			}
 
 			encCurJobSkill.Usage.data = append(encCurJobSkill.Usage.data, fightSkillData.Used)
 			encAllJobSkill.Usage.data = append(encAllJobSkill.Usage.data, fightSkillData.Used)
