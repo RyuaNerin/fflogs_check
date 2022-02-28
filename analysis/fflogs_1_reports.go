@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/getsentry/sentry-go"
 	"github.com/pkg/errors"
@@ -114,6 +115,11 @@ func (inst *analysisInstance) updateReports() bool {
 		}
 
 		for _, rank := range charData.Ranks {
+			_, ok := inst.InpCharJobs[strings.ToUpper(rank.Spec)]
+			if !ok {
+				continue
+			}
+
 			addRank(rank.Spec, len(charData.Ranks), encId, isDps, float32(rank.RankPercent), float32(rank.Amount))
 
 			////////////////////////////////////////////////////////////////////////////////

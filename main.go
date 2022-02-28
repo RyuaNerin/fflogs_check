@@ -19,5 +19,5 @@ func main() {
 
 	g.GET("/api/analysis", routeRequest)
 
-	g.Run("127.0.0.1:5555")
+	g.Run("127.0.0.1:57381")
 }

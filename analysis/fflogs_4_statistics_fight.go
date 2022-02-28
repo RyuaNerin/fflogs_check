@@ -9,7 +9,7 @@ import (
 // 각 전투별 통계내는 부분
 func (inst *analysisInstance) buildReportFight() {
 	for _, fight := range inst.Fights {
-		if !fight.DoneEvents {
+		if !fight.DoneEvents || !fight.DoneSummary {
 			continue
 		}
 

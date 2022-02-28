@@ -397,6 +397,10 @@ func (inst *analysisInstance) updateEvents() bool {
 	}
 
 	for _, fight := range inst.Fights {
+		if !fight.DoneEvents || !fight.DoneSummary {
+			continue
+		}
+
 		sort.Slice(
 			fight.Casts,
 			func(i, k int) bool {

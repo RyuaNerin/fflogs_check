@@ -88,8 +88,8 @@ document.addEventListener(
                                 //let socket = new WebSocket();
                                 let socket = new WebSocket(
                                     (
-                                        location.host == "dev.ryuar.in:5500"
-                                        ? "ws://127.0.0.1:5555"
+                                        location.host.startsWith("dev.ryuar.in")
+                                        ? "ws://127.0.0.1:57381"
                                         : (location.protocol == "https:" ? "wss://" : "ws://") + location.host
                                     ) + "/api/analysis"
                                 );

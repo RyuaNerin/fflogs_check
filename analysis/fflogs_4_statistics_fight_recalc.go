@@ -39,6 +39,10 @@ func (inst *analysisInstance) buildReportFightRecalc() {
 	isGlobal := inst.skillSets == &ffxiv.Global
 
 	for _, fightData := range inst.Fights {
+		if !fightData.DoneEvents || !fightData.DoneSummary {
+			continue
+		}
+
 		switch fightData.Job {
 		case "Paladin":
 			gauge := fightData.AutoAttacks * 5

@@ -3,6 +3,7 @@ package analysis
 import (
 	"context"
 	"os"
+	"strings"
 
 	"ffxiv_check/analysis/oauth"
 	"ffxiv_check/ffxiv"
@@ -70,7 +71,7 @@ func Analyze(ctx context.Context, progress func(p string), opt *AnalyzeOptions) 
 	for _, job := range opt.Jobs {
 		_, ok := ffxiv.JobOrder[job]
 		if ok {
-			inst.InpCharJobs[job] = true
+			inst.InpCharJobs[strings.ToUpper(job)] = true
 		}
 	}
 
