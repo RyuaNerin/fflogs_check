@@ -13,13 +13,12 @@
         ],
         "partition": [
             { "name": "5.4" , "korea":  5, "global":  1, "locked": true },
-            { "name": "5.5" , "korea": 11, "global":  7, "locked": true },
+            { "name": "5.5" , "korea": 11, "global":  7 },
             { "name": "Echo", "korea": 17, "global": 13 }
         ]
     },
     "5ultimate5": {
         "name": "절 토벌전",
-        "use_allstar_rank": false,
         "zone": 32,
         "difficulty": 100,
         "encounter": [
@@ -34,7 +33,6 @@
     },
     "5ultimate4": {
         "name": "절 토벌전 (홍련)",
-        "use_allstar_rank": false,
         "zone": 30,
         "difficulty": 100,
         "encounter": [

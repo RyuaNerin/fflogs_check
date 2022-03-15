@@ -3,6 +3,7 @@ package perfection
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	"ffxiv_check/ffxiv"
 
 	"github.com/getsentry/sentry-go"
+	"github.com/pkg/errors"
 )
 
 func Do(ctx context.Context, reqData *analysis.RequestData, progress func(p string), buf *bytes.Buffer) bool {
@@ -28,6 +30,7 @@ func Do(ctx context.Context, reqData *analysis.RequestData, progress func(p stri
 	err := tmplResult.Execute(buf, stat)
 	if err != nil {
 		sentry.CaptureException(err)
+		fmt.Printf("%+v\n", errors.WithStack(err))
 		return false
 	}
 

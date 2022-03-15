@@ -13,6 +13,7 @@ require (
 	github.com/json-iterator/go v1.1.12
 	github.com/mattn/go-sqlite3 v1.14.12
 	github.com/pkg/errors v0.9.1
+	github.com/spf13/cast v1.3.0
 )
 
 require (

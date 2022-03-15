@@ -20,15 +20,6 @@ type tmplData struct {
 	ShowAllstar bool   `json:"show_allstar"`
 	ZoneName    string `json:"zone_name"`
 
-	Jobs    []*tmplDataJob          `json:"jobs"`
-	jobsMap map[string]*tmplDataJob `json:"-"`
-}
-
-type tmplDataJob struct {
-	Job string `json:"job"`
-
-	BestGlobal tmplDataRank `json:"best_global"`
-
 	Partitions    []*tmplDataPartition       `json:"partitions"`
 	partitionsMap map[int]*tmplDataPartition `json:"-"`
 }
@@ -38,12 +29,21 @@ type tmplDataPartition struct {
 	PartitionIDGlobal int    `json:"partition_id_global"`
 	PartitionName     string `json:"partition_name"`
 
-	Korea  tmplDataRank `json:"korea"`
-	Global tmplDataRank `json:"global"`
+	Jobs    []*tmplDataJob          `json:"jobs"`
+	jobsMap map[string]*tmplDataJob `json:"-"`
+}
+
+type tmplDataJob struct {
+	Job string `json:"job"`
+
+	Best bool `json:"best"`
 
 	TotalKills int `json:"total_kills"`
 
-	Encounters    []*tmplDataEncounter       `json:"encounters"`
+	Korea  tmplDataRank `json:"korea"`
+	Global tmplDataRank `json:"global"`
+
+	Encounters    []*tmplDataEncounter       `json:"encounter"`
 	encountersMap map[int]*tmplDataEncounter `json:"-"`
 }
 

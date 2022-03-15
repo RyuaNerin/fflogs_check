@@ -1,68 +1,85 @@
 package allstar
 
 import (
-	"encoding/json"
-	"strconv"
+	"unsafe"
+
+	jsoniter "github.com/json-iterator/go"
+	"github.com/spf13/cast"
 )
 
 type IntV struct {
 	V  int
 	Ok bool
 }
-
-func (fi *IntV) UnmarshalJSON(b []byte) (err error) {
-	if b[0] != '"' {
-		err = json.Unmarshal(b, &fi.V)
-		fi.Ok = err == nil
-		return err
-	}
-	var s string
-	if err := json.Unmarshal(b, &s); err != nil {
-		return err
-	}
-
-	if s == "-" {
-		fi.Ok = true
-		return nil
-	}
-
-	i, err := strconv.Atoi(s)
-	if err != nil {
-		return err
-	}
-
-	fi.V = i
-	fi.Ok = true
-	return nil
-}
-
 type Float32V struct {
 	V  float32
 	Ok bool
 }
 
-func (fi *Float32V) UnmarshalJSON(b []byte) (err error) {
-	if b[0] != '"' {
-		err = json.Unmarshal(b, &fi.V)
-		fi.Ok = err == nil
-		return err
-	}
-	var s string
-	if err := json.Unmarshal(b, &s); err != nil {
-		return err
-	}
+func init() {
+	jsoniter.RegisterTypeDecoderFunc(
+		"allstar.IntV",
+		func(ptr unsafe.Pointer, iter *jsoniter.Iterator) {
+			p := ((*IntV)(ptr))
 
-	if s == "-" {
-		fi.Ok = true
-		return nil
-	}
+			value := iter.Read()
+			if vStr, ok := value.(string); ok {
+				if vStr == "-" {
+					p.Ok = true
+					return
+				}
+			}
 
-	f, err := strconv.ParseFloat(s, 32)
-	if err != nil {
-		return err
-	}
+			i, err := cast.ToIntE(value)
+			if err != nil {
+				iter.Error = err
+			} else {
+				p.Ok = true
+				p.V = i
+			}
+		},
+	)
+	jsoniter.RegisterTypeEncoderFunc(
+		"allstar.IntV",
+		func(ptr unsafe.Pointer, stream *jsoniter.Stream) {
+			p := ((*IntV)(ptr))
+			stream.WriteInt(p.V)
+		},
+		func(p unsafe.Pointer) bool {
+			return false
+		},
+	)
 
-	fi.V = float32(f)
-	fi.Ok = true
-	return nil
+	jsoniter.RegisterTypeDecoderFunc(
+		"allstar.Float32V",
+		func(ptr unsafe.Pointer, iter *jsoniter.Iterator) {
+			p := ((*Float32V)(ptr))
+
+			value := iter.Read()
+			if vStr, ok := value.(string); ok {
+				if vStr == "-" {
+					p.Ok = true
+					return
+				}
+			}
+
+			f, err := cast.ToFloat32E(value)
+			if err != nil {
+				iter.Error = err
+			} else {
+				p.Ok = true
+				p.V = f
+			}
+		},
+	)
+	jsoniter.RegisterTypeEncoderFunc(
+		"allstar.Float32V",
+		func(ptr unsafe.Pointer, stream *jsoniter.Stream) {
+			p := ((*Float32V)(ptr))
+			stream.WriteFloat32(p.V)
+		},
+		func(p unsafe.Pointer) bool {
+			return false
+		},
+	)
 }

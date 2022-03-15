@@ -29,8 +29,8 @@ func (inst *analysisInstance) UpdateKrEncounterRank() bool {
 	var todoList []*TodoData
 	todoMap := make(map[string]*TodoData)
 
-	for _, jobData := range inst.tmplData.jobsMap {
-		for _, partData := range jobData.partitionsMap {
+	for _, partData := range inst.tmplData.partitionsMap {
+		for _, jobData := range partData.jobsMap {
 			td := &TodoData{
 				Key:       fmt.Sprintf("h%d", len(todoList)),
 				Partition: partData.PartitionIDKorea,
@@ -94,11 +94,20 @@ func (inst *analysisInstance) UpdateKrEncounterRank() bool {
 			}
 		}
 
-		partData := inst.tmplData.jobsMap[td.Spec].partitionsMap[td.Partition]
+		partData := inst.tmplData.partitionsMap[td.Partition]
 
-		partData.Korea.Allstar = resp.AllStars[0].Points
-		partData.Korea.Rank = resp.AllStars[0].Rank
-		partData.Korea.RankPercent = resp.AllStars[0].RankPercent
+		jobData, ok := partData.jobsMap[td.Spec]
+		if !ok {
+			jobData = &tmplDataJob{
+				Job:           td.Spec,
+				encountersMap: make(map[int]*tmplDataEncounter, len(inst.Preset.Encounter)),
+			}
+			partData.jobsMap[td.Spec] = jobData
+		}
+
+		jobData.Korea.Allstar = resp.AllStars[0].Points
+		jobData.Korea.Rank = resp.AllStars[0].Rank
+		jobData.Korea.RankPercent = resp.AllStars[0].RankPercent
 
 		for _, respEnc := range resp.Rankings {
 			if respEnc.Allstar == nil {
@@ -107,12 +116,13 @@ func (inst *analysisInstance) UpdateKrEncounterRank() bool {
 
 			encID := respEnc.Encounter.ID
 
-			encData, ok := partData.encountersMap[encID]
+			encData, ok := jobData.encountersMap[encID]
 			if !ok {
 				encData = &tmplDataEncounter{
-					EncounterID: encID,
+					EncounterID:   encID,
+					EncounterName: inst.Preset.EncounterMap[encID].Name,
 				}
-				partData.encountersMap[encID] = encData
+				jobData.encountersMap[encID] = encData
 			}
 
 			encData.Kills = respEnc.TotalKills

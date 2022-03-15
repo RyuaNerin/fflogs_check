@@ -85,16 +85,7 @@ func (inst *analysisInstance) UpdateKrEncounterRdps() bool {
 
 			logCount++
 
-			jobData, ok := inst.tmplData.jobsMap[rank.Spec]
-			if !ok {
-				jobData = &tmplDataJob{
-					Job:           rank.Spec,
-					partitionsMap: make(map[int]*tmplDataPartition, len(inst.Preset.Partition)),
-				}
-				inst.tmplData.jobsMap[rank.Spec] = jobData
-			}
-
-			partData, ok := jobData.partitionsMap[partID]
+			partData, ok := inst.tmplData.partitionsMap[partID]
 			if !ok {
 				part := inst.Preset.PartitionMap[partID]
 				partData = &tmplDataPartition{
@@ -102,17 +93,27 @@ func (inst *analysisInstance) UpdateKrEncounterRdps() bool {
 					PartitionIDGlobal: part.Global,
 					PartitionName:     part.Name,
 
-					encountersMap: make(map[int]*tmplDataEncounter, len(inst.Preset.Encounter)),
+					jobsMap: make(map[string]*tmplDataJob, len(inst.Jobs)),
 				}
-				jobData.partitionsMap[partID] = partData
+				inst.tmplData.partitionsMap[partID] = partData
 			}
 
-			encData, ok := partData.encountersMap[encId]
+			jobData, ok := partData.jobsMap[rank.Spec]
+			if !ok {
+				jobData = &tmplDataJob{
+					Job:           rank.Spec,
+					encountersMap: make(map[int]*tmplDataEncounter, len(inst.Preset.Encounter)),
+				}
+				partData.jobsMap[rank.Spec] = jobData
+			}
+
+			encData, ok := jobData.encountersMap[encId]
 			if !ok {
 				encData = &tmplDataEncounter{
-					EncounterID: encId,
+					EncounterID:   encId,
+					EncounterName: inst.Preset.EncounterMap[encId].Name,
 				}
-				partData.encountersMap[encId] = encData
+				jobData.encountersMap[encId] = encData
 			}
 
 			if encData.Rdps < rank.Amount {

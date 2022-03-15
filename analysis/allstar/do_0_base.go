@@ -16,11 +16,11 @@ import (
 
 func Do(ctx context.Context, reqData *analysis.RequestData, progress func(p string), buf *bytes.Buffer) bool {
 	tmplData := tmplData{
-		CharName:   reqData.CharName,
-		CharServer: reqData.CharServer,
-		UpdatedAt:  time.Now().Format("2006-01-02 15:04:05"),
-		State:      statisticStateInvalid,
-		jobsMap:    make(map[string]*tmplDataJob),
+		CharName:      reqData.CharName,
+		CharServer:    reqData.CharServer,
+		UpdatedAt:     time.Now().Format("2006-01-02 15:04:05"),
+		State:         statisticStateInvalid,
+		partitionsMap: make(map[int]*tmplDataPartition),
 	}
 
 	if !doStat(ctx, reqData, progress, &tmplData) {
@@ -50,7 +50,6 @@ func doStat(ctx context.Context, reqData *analysis.RequestData, progress func(p 
 	}
 
 	allstarData.ZoneName = preset.Name
-	allstarData.ShowAllstar = preset.UseAllstarRank
 
 	ok = reqData.CheckOptionValidation()
 	if !ok {

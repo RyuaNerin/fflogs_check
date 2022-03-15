@@ -8,14 +8,13 @@ import (
 )
 
 type preset struct {
-	Name           string                   `json:"name"`
-	UseAllstarRank bool                     `json:"use_allstar_rank"` // True 면 올스타 순위 계산
-	Zone           int                      `json:"zone"`
-	Difficulty     int                      `json:"difficulty"`
-	Encounter      []*presetEncounter       `json:"encounter"`
-	EncounterMap   map[int]*presetEncounter `json:"-"`
-	Partition      []*presetPartition       `json:"partition"`
-	PartitionMap   map[int]*presetPartition `json:"-"`
+	Name         string                   `json:"name"`
+	Zone         int                      `json:"zone"`
+	Difficulty   int                      `json:"difficulty"`
+	Encounter    []*presetEncounter       `json:"encounter"`
+	EncounterMap map[int]*presetEncounter `json:"-"`
+	Partition    []*presetPartition       `json:"partition"`
+	PartitionMap map[int]*presetPartition `json:"-"`
 }
 type presetEncounter struct {
 	EncounterID int    `json:"id"`
