@@ -84,6 +84,13 @@ func GetEncounterRank(ctx context.Context, encounterID int, partitionID int, spe
 	}
 	r.AllstarPoint = rdps / maxRdps * 120
 
+	if rdps > maxRdps {
+		r.Rank = 1
+		r.AllstarPoint = 120
+		r.RankPercent = 100
+		return
+	}
+
 	if rdps <= minRdps {
 		r.Rank = Over5000
 		return
@@ -121,11 +128,13 @@ func GetAllstarRank(ctx context.Context, zoneID int, partitionID int, spec strin
 	specInt := specMap[spec]
 
 	var totalUsers int
+	var maxAllstar float32
 	var minAllstar float32
 	err = db.QueryRowContext(
 		ctx,
 		`SELECT
 			total_user,
+			max_allstar,
 			min_allstar
 		FROM
 			allstar_info
@@ -140,9 +149,16 @@ func GetAllstarRank(ctx context.Context, zoneID int, partitionID int, spec strin
 		specInt,
 	).Scan(
 		&totalUsers,
+		&maxAllstar,
 		&minAllstar,
 	)
 	if err != nil {
+		return
+	}
+
+	if allstar > maxAllstar {
+		r.Rank = 1
+		r.RankPercent = 100
 		return
 	}
 
