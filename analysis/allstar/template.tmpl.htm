@@ -145,6 +145,7 @@
                                                         <th scope="col" class="text-center">Rdps</th>
                                                         <th scope="col" class="text-center">한국 올스타</th>
                                                         <th scope="col" class="text-center">한국 순위</th>
+                                                        <th scope="col" class="text-center">한국 순위 %</th>
                                                         <th scope="col" class="text-center">글섭 올스타</th>
                                                         <th scope="col" class="text-center">글섭 순위</th>
                                                         <th scope="col" class="text-center">글섭 순위 %</th>
@@ -163,6 +164,7 @@
                                                         <td></td>
                                                         <td class="text-center">{{ template "Allstar" $jobData.Korea }}</td>
                                                         <td class="text-center">{{ template "Rank"    $jobData.Korea }}</td>
+                                                        <td class="text-center">{{ template "RankP"   $jobData.Korea  }}</td>
                                                         <td class="text-center">{{ template "Allstar" $jobData.Global }}</td>
                                                         <td class="text-center">{{ template "Rank"    $jobData.Global }}</td>
                                                         <td class="text-center">{{ template "RankP"   $jobData.Global }}</td>
@@ -185,6 +187,7 @@
                                                             </td>
                                                             <td class="text-center">{{ template "Allstar" $endData.Korea  }}</td>
                                                             <td class="text-center">{{ template "Rank"    $endData.Korea  }}</td>
+                                                            <td class="text-center">{{ template "RankP"   $endData.Korea  }}</td>
                                                             <td class="text-center">{{ template "Allstar" $endData.Global }}</td>
                                                             <td class="text-center">{{ template "Rank"    $endData.Global }}</td>
                                                             <td class="text-center">{{ template "RankP"   $endData.Global }}</td>

@@ -40,7 +40,7 @@
             { "id": 1047, "name": "절 바하무트 토벌전" }
         ],
         "partition": [
-            { "name": "All Patches" , "korea": 0, "global": 0 }
+            { "name": "All Patches" , "korea": 5, "global": 1 }
         ]
     }
 }
