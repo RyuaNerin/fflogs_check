@@ -3,4 +3,10 @@
         "**/*"
     ],
     "liveServer.settings.fullReload": false,
+    "liveServer.settings.port": 5758,
+    
+    "files.associations": {
+        "*.tmpl.htm": "gohtml",
+        "*.tmpl": "gotemplate"
+    }
 }

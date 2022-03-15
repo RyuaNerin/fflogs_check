@@ -1,0 +1,48 @@
+{
+    "54eden": {
+        "name": "희망의 낙원 에덴: 재생편 (영웅)",
+        "use_allstar_rank": true,
+        "zone": 38,
+        "difficulty": 101,
+        "encounter": [
+            { "id": 73, "name": "어둠의 구름" },
+            { "id": 74, "name": "그림자의 왕" },
+            { "id": 75, "name": "페이트 브레이커" },
+            { "id": 76, "name": "에덴의 약속" },
+            { "id": 77, "name": "어둠의 무녀" }
+        ],
+        "partition": [
+            { "name": "5.4" , "korea":  5, "global":  1, "locked": true },
+            { "name": "5.5" , "korea": 11, "global":  7, "locked": true },
+            { "name": "Echo", "korea": 17, "global": 13 }
+        ]
+    },
+    "5ultimate5": {
+        "name": "절 토벌전",
+        "use_allstar_rank": false,
+        "zone": 32,
+        "difficulty": 100,
+        "encounter": [
+            { "id": 1050, "name": "절 알렉산더 토벌전" }
+        ],
+        "partition": [
+            { "name": "5.1 - 5.2" , "korea":  5, "global":  1, "locked": true },
+            { "name": "5.3"       , "korea": 11, "global":  7, "locked": true },
+            { "name": "5.4"       , "korea": 17, "global": 13, "locked": true },
+            { "name": "5.5"       , "korea": 23, "global": 19 }
+        ]
+    },
+    "5ultimate4": {
+        "name": "절 토벌전 (홍련)",
+        "use_allstar_rank": false,
+        "zone": 30,
+        "difficulty": 100,
+        "encounter": [
+            { "id": 1048, "name": "절 알테마 웨폰 파괴작전" },
+            { "id": 1047, "name": "절 바하무트 토벌전" }
+        ],
+        "partition": [
+            { "name": "All Patches" , "korea": 0, "global": 0 }
+        ]
+    }
+}

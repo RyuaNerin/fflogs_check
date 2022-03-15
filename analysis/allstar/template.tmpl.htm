@@ -1,0 +1,173 @@
+{{ define "Rank" }}
+    {{ if eq $.Rank 0 }}
+        {{/* 기록 없음 */}}
+        -
+    {{ else if eq $.Rank -1 }}
+        {{/* 5000 위 넘김 */}}
+        <div class="dps r0">&gt;5000</div>
+    {{ else }}
+        {{      if eq $.RankPercent 100.0 }}<div class="dps r100" title="{{ fn $.RankPercent }}">{{ $.Rank }}</div>
+        {{ else if ge $.RankPercent  99.0 }}<div class="dps r99"  title="{{ fn $.RankPercent }}">{{ $.Rank }}</div>
+        {{ else if ge $.RankPercent  95.0 }}<div class="dps r95"  title="{{ fn $.RankPercent }}">{{ $.Rank }}</div>
+        {{ else if ge $.RankPercent  75.0 }}<div class="dps r75"  title="{{ fn $.RankPercent }}">{{ $.Rank }}</div>
+        {{ else if ge $.RankPercent  50.0 }}<div class="dps r50"  title="{{ fn $.RankPercent }}">{{ $.Rank }}</div>
+        {{ else if ge $.RankPercent  25.0 }}<div class="dps r25"  title="{{ fn $.RankPercent }}">{{ $.Rank }}</div>
+        {{ else if ge $.RankPercent   0.0 }}<div class="dps r0"   title="{{ fn $.RankPercent }}">{{ $.Rank }}</div>
+        {{ else                           }}<div class="dps "     title="{{ fn $.RankPercent }}">{{ $.Rank }}</div>
+        {{ end }}
+    {{ end }}
+{{ end }}
+
+
+
+
+
+
+
+
+
+<h1>{{ $.CharName }}@{{ $.CharServer }} (ko)</h1>
+
+<div class="mb-3">{{ $.UpdatedAt }} 기준</div>
+
+{{ if eq $.State "notfound" }}
+<div class="alert alert-danger" role="alert">
+    캐릭터를 찾을 수 없습니다.
+</div>
+{{ else if eq $.State "invalid" }}
+<div class="alert alert-danger" role="alert">
+    잘못된 요청입니다.
+</div>
+{{ else }}
+    <div>
+        <a href="{{ $.FFLogsLink }}" class="text-decoration-none fw-bold" target="_blank">FFLogs 열기</a>
+    </div>
+
+    {{ if eq $.State "hidden" }}
+    <div class="alert alert-danger" role="alert">
+        비공개 캐릭터입니다.
+    </div>
+    {{ else if eq $.State "nolog" }}
+    <div class="alert alert-danger" role="alert">
+        클리어 기록이 없습니다.
+    </div>
+    {{ else }}
+        <ul class="nav nav-tabs" role="tablist">
+            {{ range $jobIndex, $jobData := $.Jobs }}
+                <li class="nav-item" role="presentation">
+                    <button
+                        {{ if eq $jobIndex 0 }}
+                            class="nav-link active"
+                            aria-selected="true"
+                        {{ else }}
+                            class="nav-link"
+                            aria-selected="false"
+                        {{ end }}
+                        id="tab{{ $jobIndex }}-btn"
+                        data-bs-toggle="tab"
+                        data-bs-target="#tab{{ $jobIndex }}"
+                        type="button"
+                        role="tab"
+                        aria-controls="tab{{ $jobIndex }}"
+                    ><img class="icon32 job32 {{ $jobData.Job }}"><span class="text-danger ms-1">{{ template "Rank" $jobData.BestGlobal }}</span></button>
+                </li>
+            {{ end }}
+        </ul>
+        <div class="tab-content">
+            {{ range $jobIndex, $jobData := $.Jobs }}
+                <div
+                    {{ if eq $jobIndex 0 }}
+                        class="tab-pane fade show active"
+                    {{ else }}
+                        class="tab-pane fade"
+                    {{ end }}
+                    id="tab{{ $jobIndex }}"
+                    role="tabpanel"
+                    aria-labelledby="tab{{ $jobIndex }}-btn">
+                    <div class="accordion">
+                        {{ range $partIndex, $partData := $jobData.Partitions }}
+                            <div class="accordion-item"
+                                 id="tab{{ $jobIndex }}_{{ $partIndex }}_accordion">
+                                <h2 class="accordion-header"
+                                    id="tab{{ $jobIndex }}_head{{ $partIndex }}">
+                                    <button class="accordion-button"
+                                            type="button"
+                                            data-bs-toggle="collapse"
+                                            data-bs-target="#tab{{ $jobIndex }}_item{{ $partIndex }}"
+                                            aria-expanded="true"
+                                            aria-controls="tab{{ $jobIndex }}_item{{ $partIndex }}">
+                                        <b>{{ $partData.PartitionName }}</b><span class="ms-3">{{ template "Rank" $partData.Global }}</span>
+                                    </button>
+                                </h2>
+                                <div class="accordion-collapse collapse show"
+                                     id="tab{{ $jobIndex }}_item{{ $partIndex }}"
+                                     aria-labelledby="tab{{ $jobIndex }}_head{{ $partIndex }}"
+                                     data-bs-parent="#tab{{ $jobIndex }}_{{ $partIndex }}_accordion">
+                                    <div class="accordion-body">
+                                        <table class="table table-sm table-hover align-middle">
+                                            <thead>
+                                                <tr>
+                                                    <th scope="col">이름</th>
+                                                    <th scope="col" class="text-center">킬</th>
+                                                    <th scope="col" class="text-center">Rdps</th>
+                                                    <th scope="col" class="text-center">한국 올스타</th>
+                                                    <th scope="col" class="text-center">한국 순위</th>
+                                                    <th scope="col" class="text-center">글섭 올스타</th>
+                                                    <th scope="col" class="text-center">글섭 순위</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {{ if $.ShowAllstar }}
+                                                    <tr>
+                                                        <th scope="row">{{ $.ZoneName }}</th>
+                                                        <td class="text-center">{{ fn $partData.TotalKills }}</td>
+                                                        <td></td>
+                                                        <td class="text-center">
+                                                            {{ if ne $partData.Korea.Rank 0 }}
+                                                                {{ fn $partData.Korea.Allstar }}
+                                                            {{ end }}
+                                                        </td>
+                                                        <td class="text-center">{{ template "Rank" $partData.Korea }}</td>
+                                                        <td class="text-center">
+                                                            {{ if ne $partData.Global.Rank 0 }}
+                                                                {{ fn $partData.Global.Allstar }}
+                                                            {{ end }}
+                                                        </td>
+                                                        <td class="text-center">{{ template "Rank" $partData.Global }}</td>
+                                                    </td>
+                                                {{ end }}
+                                                {{ range $encIndex, $endData := $partData.Encounters }}
+                                                    <tr>
+                                                        <th scope="row">{{ $endData.EncounterName }}</th>
+                                                        <td class="text-center">{{ fn $endData.Kills }}</td>
+                                                        <td class="text-center">
+                                                            {{ if ne $endData.Rdps 0.0 }}
+                                                                {{ fn $endData.Rdps }}
+                                                            {{ end }}
+                                                        </td>
+                                                        <td class="text-center">
+                                                            {{ if ne $endData.Korea.Rank 0 }}
+                                                                {{ fn $endData.Korea.Allstar }}
+                                                            {{ end }}
+                                                        </td>
+                                                        <td class="text-center">{{ template "Rank" $endData.Korea }}</td>
+                                                        <td class="text-center">
+                                                            {{ if ne $endData.Global.Rank 0 }}
+                                                                {{ fn $endData.Global.Allstar }}
+                                                            {{ end }}
+                                                        </td>
+                                                        <td class="text-center">{{ template "Rank" $endData.Global }}</td>
+                                                    </td>
+                                                {{ end }}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        {{ end }}
+                    </div>
+                </div>
+            {{ end }}
+        </div>
+    {{ end }}
+{{ end }}

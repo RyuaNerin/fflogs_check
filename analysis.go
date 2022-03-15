@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"ffxiv_check/analysispool"
+	"ffxiv_check/analysis/analysispool"
 
 	"github.com/dpapathanasiou/go-recaptcha"
 	"github.com/getsentry/sentry-go"

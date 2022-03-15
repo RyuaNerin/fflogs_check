@@ -3,6 +3,7 @@ package cache
 import (
 	"compress/gzip"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -186,5 +187,83 @@ func (s *Storage) Load(h uint64, r interface{}) bool {
 		fmt.Printf("%+v\n", errors.WithStack(err))
 		return false
 	}
+	return true
+}
+
+func (s *Storage) SaveRaw(h uint64, r io.Reader) {
+	s.cleanUpLock.RLock()
+	defer s.cleanUpLock.RUnlock()
+
+	if !s.lock(h) {
+		return
+	}
+	defer s.unlock(h)
+
+	fsPath := s.path(h)
+	os.MkdirAll(filepath.Dir(fsPath), 0700)
+
+	fs, err := os.Create(fsPath)
+	if err != nil {
+		sentry.CaptureException(err)
+		fmt.Printf("%+v\n", errors.WithStack(err))
+		return
+	}
+	defer fs.Close()
+
+	gz := gzip.NewWriter(fs)
+	defer gz.Close()
+
+	_, err = io.Copy(gz, r)
+	if err != nil && err != io.EOF {
+		sentry.CaptureException(err)
+		fmt.Printf("%+v\n", errors.WithStack(err))
+		gz.Close()
+		fs.Close()
+		os.Remove(fsPath)
+		return
+	}
+
+	err = gz.Flush()
+	if err != nil {
+		sentry.CaptureException(err)
+		fmt.Printf("%+v\n", errors.WithStack(err))
+		gz.Close()
+		fs.Close()
+		os.Remove(fsPath)
+		return
+	}
+}
+
+func (s *Storage) LoadRaw(h uint64, w io.Writer) bool {
+	s.cleanUpLock.RLock()
+	defer s.cleanUpLock.RUnlock()
+
+	if s.check(h) {
+		return false
+	}
+
+	fsPath := s.path(h)
+
+	fs, err := os.Open(fsPath)
+	if err != nil {
+		return false
+	}
+	defer fs.Close()
+
+	gz, err := gzip.NewReader(fs)
+	if err != nil {
+		sentry.CaptureException(err)
+		fmt.Printf("%+v\n", errors.WithStack(err))
+		return false
+	}
+	defer gz.Close()
+
+	_, err = io.Copy(w, gz)
+	if err != nil && err != io.EOF {
+		sentry.CaptureException(err)
+		fmt.Printf("%+v\n", errors.WithStack(err))
+		return false
+	}
+
 	return true
 }

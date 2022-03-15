@@ -5,11 +5,13 @@ go 1.17
 require (
 	github.com/dimchansky/utfbom v1.1.1
 	github.com/dpapathanasiou/go-recaptcha v0.0.0-20190121160230-be5090b17804
+	github.com/dustin/go-humanize v1.0.0
 	github.com/getsentry/sentry-go v0.12.0
 	github.com/gin-gonic/gin v1.7.7
 	github.com/gorilla/websocket v1.4.2
 	github.com/joho/godotenv v1.4.0
 	github.com/json-iterator/go v1.1.12
+	github.com/mattn/go-sqlite3 v1.14.12
 	github.com/pkg/errors v0.9.1
 )
 
