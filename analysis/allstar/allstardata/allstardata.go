@@ -91,9 +91,9 @@ func GetEncounterRank(ctx context.Context, encounterID int, partitionID int, spe
 		allstarBase1 = allstarBase1a
 	}
 
-	allstarBase2 := rdps / maxRdps * 20
+	allstarBase2 := rdps / maxRdps * 40
 
-	r.AllstarPoint = allstarBase1 + allstarBase2
+	r.AllstarPoint = allstarBase1*0.8 + allstarBase2
 
 	if rdps > maxRdps {
 		r.Rank = 1
