@@ -33,6 +33,7 @@ func (inst *analysisInstance) UpdateGlobalRank() bool {
 						partData.PartitionIDGlobal,
 						jobData.Job,
 						encData.Rdps,
+						encData.RdpsP,
 					)
 					if err != nil {
 						sentry.CaptureException(err)

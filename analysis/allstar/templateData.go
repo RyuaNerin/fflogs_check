@@ -54,6 +54,7 @@ type tmplDataEncounter struct {
 	Kills int `json:"kills"`
 
 	Rdps   float32      `json:"rdps"`
+	RdpsP  float32      `json:"rdps_p"`
 	Korea  tmplDataRank `json:"korea"`
 	Global tmplDataRank `json:"global"`
 }

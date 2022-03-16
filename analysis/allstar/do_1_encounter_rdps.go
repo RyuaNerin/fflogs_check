@@ -30,9 +30,10 @@ func (inst *analysisInstance) UpdateKrEncounterRdps() bool {
 				} `json:"char"`
 				CharEncounter map[string]struct {
 					Ranks []struct {
-						TodayPercent float32 `json:"todayPercent"`
-						Amount       float32 `json:"amount"`
-						Spec         string  `json:"spec"`
+						TodayPercent      float32 `json:"todayPercent"`
+						HistoricalPercent float32 `json:"historicalPercent"`
+						Amount            float32 `json:"amount"`
+						Spec              string  `json:"spec"`
 					} `json:"ranks"`
 				} `json:"char_encounter"`
 			} `json:"characterData"`
@@ -118,6 +119,7 @@ func (inst *analysisInstance) UpdateKrEncounterRdps() bool {
 
 			if encData.Rdps < rank.Amount {
 				encData.Rdps = rank.Amount
+				encData.RdpsP = rank.HistoricalPercent
 			}
 		}
 	}

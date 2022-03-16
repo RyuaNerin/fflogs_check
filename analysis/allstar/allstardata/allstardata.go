@@ -50,7 +50,7 @@ type EncounterRank struct {
 	AllstarPoint float32 // GetEncounterRank 에서만 할당됨
 }
 
-func GetEncounterRank(ctx context.Context, encounterID int, partitionID int, spec string, rdps float32) (r EncounterRank, err error) {
+func GetEncounterRank(ctx context.Context, encounterID int, partitionID int, spec string, rdps float32, histP float32) (r EncounterRank, err error) {
 	//log.Println("EncounterID:", encounterID, "partitionID:", partitionID, "spec:", spec, "rdps:", rdps)
 	specInt := specMap[spec]
 
@@ -82,7 +82,18 @@ func GetEncounterRank(ctx context.Context, encounterID int, partitionID int, spe
 	if err != nil {
 		return
 	}
-	r.AllstarPoint = rdps / maxRdps * 120
+
+	allstarBase1a := histP
+	allstarBase1b := rdps / maxRdps * 100
+
+	allstarBase1 := allstarBase1b
+	if allstarBase1a > allstarBase1b {
+		allstarBase1 = allstarBase1a
+	}
+
+	allstarBase2 := rdps / maxRdps * 20
+
+	r.AllstarPoint = allstarBase1 + allstarBase2
 
 	if rdps > maxRdps {
 		r.Rank = 1
