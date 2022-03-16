@@ -190,10 +190,12 @@ func (inst *analysisInstance) UpdateKrEncounterRank() bool {
 			q := struct {
 				CharName   string
 				CharServer string
+				Difficulty int
 				Data       []*TodoData
 			}{
 				CharName:   inst.CharName,
 				CharServer: inst.CharServer,
+				Difficulty: inst.Preset.Difficulty,
 				Data:       query,
 			}
 

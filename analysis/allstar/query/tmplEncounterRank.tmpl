@@ -2,7 +2,7 @@
 	characterData {
 		character(name: "{{ $.CharName }}", serverSlug:"{{ $.CharServer }}", serverRegion: "kr") {
 			{{ range $i, $data := $.Data }}
-				{{ $data.Key }}: zoneRankings(zoneID: {{ $data.ZoneID }}, partition: {{ $data.Partition }}, specName: "{{ $data.Spec }}")
+				{{ $data.Key }}: zoneRankings(zoneID: {{ $data.ZoneID }}, partition: {{ $data.Partition }}, difficulty: {{ $.Difficulty }}, specName: "{{ $data.Spec }}")
 			{{ end }}
 		}
 	}
