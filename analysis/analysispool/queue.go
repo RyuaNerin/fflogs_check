@@ -81,16 +81,20 @@ func queueWorker() {
 		log.Printf("Start: %s@%s", q.reqData.CharName, q.reqData.CharServer)
 		q.Start()
 
-		var res bool
-		switch q.reqData.Service {
-		case "perfection":
-			res = perfection.Do(q.ctx, &q.reqData, q.Progress, q.buf)
-		case "allstar":
-			res = allstar.Do(q.ctx, &q.reqData, q.Progress, q.buf)
+		if q.ctx.Err() != nil {
+			q.chanResult <- false
+		} else {
+			var res bool
+			switch q.reqData.Service {
+			case "perfection":
+				res = perfection.Do(q.ctx, &q.reqData, q.Progress, q.buf)
+			case "allstar":
+				res = allstar.Do(q.ctx, &q.reqData, q.Progress, q.buf)
+			}
+			q.chanResult <- res
 		}
 
 		log.Printf("End: %s@%s", q.reqData.CharName, q.reqData.CharServer)
-		q.chanResult <- res
 	}
 }
 
