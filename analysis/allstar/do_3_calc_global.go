@@ -17,10 +17,10 @@ func (inst *analysisInstance) UpdateGlobalRank() bool {
 
 	for _, partData := range inst.tmplData.partitionsMap {
 		var bestJob string
-		var bestJobRank int
+		var bestJobRankPercent float32 = -1
 
 		var best2Job string
-		var best2JobAllstar float32
+		var best2JobAllstar float32 = -1
 
 		for _, jobData := range partData.jobsMap {
 			var allstarSum float32
@@ -81,11 +81,11 @@ func (inst *analysisInstance) UpdateGlobalRank() bool {
 			jobData.Global.RankPercent = r.RankPercent
 			jobData.TotalKills = kills
 
-			if bestJobRank == 0 || (r.Rank != allstardata.Over5000 && r.Rank < bestJobRank) {
-				bestJobRank = r.Rank
+			if bestJobRankPercent == -1 || (r.Rank != allstardata.Over5000 && r.RankPercent < bestJobRankPercent) {
+				bestJobRankPercent = r.RankPercent
 				bestJob = jobData.Job
 			}
-			if best2JobAllstar < allstarSum {
+			if best2JobAllstar == -1 || best2JobAllstar < allstarSum {
 				best2JobAllstar = allstarSum
 				best2Job = jobData.Job
 			}
