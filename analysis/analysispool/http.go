@@ -103,14 +103,21 @@ func Do(ctx context.Context, ws *websocket.Conn) {
 			}
 		}
 		queue = append(queue, &q)
-		q.Reorder(len(queue))
+		queueCount := len(queue)
 		queueLock.Unlock()
 
-		if <-q.chanResult {
-			q.Succ(q.buf)
-			csTemplate.SaveRaw(h, q.buf)
-		} else {
-			q.Error()
+		q.Reorder(queueCount)
+
+		select {
+		case ok := <-q.chanResult:
+			if ok {
+				q.Succ(q.buf)
+				csTemplate.SaveRaw(h, q.buf)
+			} else {
+				q.Error()
+			}
+
+		case <-ctx.Done():
 		}
 	}
 

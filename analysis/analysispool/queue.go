@@ -66,8 +66,8 @@ func queueWorker() {
 
 			if len(queue) > 1 {
 				for i := 1; i < len(queue); i++ {
-					go queue[1].Reorder(i)
-					queue[0] = queue[1]
+					go queue[i].Reorder(i)
+					queue[i-1] = queue[i]
 				}
 			}
 			queue = queue[:len(queue)-1]

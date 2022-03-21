@@ -63,9 +63,12 @@ func routeRequest(c *gin.Context) {
 	}
 
 	ok, err := recaptcha.Confirm(remoteAddr, string(msg))
-	if err != nil || !ok {
+	if err != nil {
 		sentry.CaptureException(err)
 		fmt.Printf("%+v\n", errors.WithStack(err))
+		return
+	}
+	if !ok {
 		return
 	}
 
