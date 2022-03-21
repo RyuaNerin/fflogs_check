@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"time"
+
+	"ffxiv_check/ffxiv"
 )
 
 func (inst *analysisInstance) buildReport() {
@@ -14,7 +16,7 @@ func (inst *analysisInstance) buildReport() {
 
 	inst.stat.UpdatedAt = time.Now().Format("2006-01-02 15:04:05")
 	inst.stat.State = inst.charState
-	inst.stat.jobsMap = make(map[string]*statisticJob, len(inst.InpCharJobs)+1)
+	inst.stat.jobsMap = make(map[string]*statisticJob, len(ffxiv.JobOrder)+1)
 	inst.stat.encountersMap = make(map[int]*statisticEncounter, len(inst.InpEncounterIDs))
 
 	inst.stat.jobsMap[""] = &statisticJob{
@@ -23,7 +25,7 @@ func (inst *analysisInstance) buildReport() {
 	inst.stat.encountersMap[0] = &statisticEncounter{
 		ID:      0,
 		Name:    "종합",
-		jobsMap: make(map[string]*statisticEncounterJob, len(inst.InpCharJobs)),
+		jobsMap: make(map[string]*statisticEncounterJob, len(ffxiv.JobOrder)),
 	}
 
 	switch inst.InpCharRegion {

@@ -1,13 +1,14 @@
 package perfection
 
 import (
-	"ffxiv_check/analysis"
 	"fmt"
 	"log"
 	"regexp"
 	"sort"
 	"strconv"
-	"strings"
+
+	"ffxiv_check/analysis"
+	"ffxiv_check/ffxiv"
 
 	"github.com/getsentry/sentry-go"
 	"github.com/pkg/errors"
@@ -75,8 +76,8 @@ func (inst *analysisInstance) updateReports() bool {
 		rankJob, ok := inst.encounterRanks[encId]
 		if !ok {
 			rankJob = &analysisRank{
-				Dps: make(map[string]*analysisRankData, 1+len(inst.InpCharJobs)),
-				Hps: make(map[string]*analysisRankData, 1+len(inst.InpCharJobs)),
+				Dps: make(map[string]*analysisRankData, 1+len(ffxiv.JobOrder)),
+				Hps: make(map[string]*analysisRankData, 1+len(ffxiv.JobOrder)),
 			}
 			inst.encounterRanks[encId] = rankJob
 		}
@@ -116,11 +117,6 @@ func (inst *analysisInstance) updateReports() bool {
 		}
 
 		for _, rank := range charData.Ranks {
-			_, ok := inst.InpCharJobs[strings.ToUpper(rank.Spec)]
-			if !ok {
-				continue
-			}
-
 			addRank(rank.Spec, len(charData.Ranks), encId, isDps, float32(rank.RankPercent), float32(rank.Amount))
 
 			////////////////////////////////////////////////////////////////////////////////

@@ -4,11 +4,9 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"ffxiv_check/analysis"
-	"ffxiv_check/ffxiv"
 
 	"github.com/getsentry/sentry-go"
 	"github.com/pkg/errors"
@@ -71,7 +69,6 @@ func doStat(ctx context.Context, reqData *analysis.RequestData, progress func(p 
 
 		CharName:   reqData.CharName,
 		CharServer: reqData.CharServer,
-		Jobs:       make(map[string]bool, len(reqData.Jobs)),
 
 		progressString: make(chan string),
 	}
@@ -91,13 +88,6 @@ func doStat(ctx context.Context, reqData *analysis.RequestData, progress func(p 
 			}
 		}
 	}()
-
-	for _, job := range reqData.Jobs {
-		_, ok := ffxiv.JobOrder[job]
-		if ok {
-			inst.Jobs[strings.ToUpper(job)] = true
-		}
-	}
 
 	res := false
 	if inst.UpdateKrEncounterRdps() {

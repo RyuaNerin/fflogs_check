@@ -4,19 +4,17 @@ import (
 	"ffxiv_check/ffxiv"
 	"fmt"
 	"hash/fnv"
-	"sort"
 	"strings"
 	"unicode"
 	"unicode/utf8"
 )
 
 type RequestData struct {
-	Service    string   `json:"service"`
-	Preset     string   `json:"preset"`
-	CharName   string   `json:"char_name"`
-	CharServer string   `json:"char_server"`
-	CharRegion string   `json:"char_region"`
-	Jobs       []string `json:"jobs"`
+	Service    string `json:"service"`
+	Preset     string `json:"preset"`
+	CharName   string `json:"char_name"`
+	CharServer string `json:"char_server"`
+	CharRegion string `json:"char_region"`
 }
 
 func (rd *RequestData) CheckOptionValidation() bool {
@@ -35,20 +33,12 @@ func (rd *RequestData) CheckOptionValidation() bool {
 	case lenCharServer > 10:
 	case lenCharRegion < 2:
 	case lenCharRegion > 5:
-	case len(rd.Jobs) == 0:
-	case len(rd.Jobs) > len(ffxiv.JobOrder):
 	default:
 		return true
 	}
 
 	if rd.CharRegion != "kr" {
 		return false
-	}
-
-	for _, job := range rd.Jobs {
-		if _, ok := ffxiv.JobOrder[job]; !ok {
-			return false
-		}
 	}
 
 	return false
@@ -90,16 +80,6 @@ func (rd *RequestData) Hash() uint64 {
 	append(rd.CharName)
 	append(rd.CharServer)
 	append(rd.CharRegion)
-
-	sort.Strings(rd.Jobs)
-	jobs := make([]string, len(rd.Jobs))
-	copy(jobs, rd.Jobs)
-	for i := range jobs {
-		jobs[i] = strings.ToLower(jobs[i])
-	}
-	for _, job := range jobs {
-		fmt.Fprint(h, job, "|")
-	}
 
 	return h.Sum64()
 }

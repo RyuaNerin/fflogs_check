@@ -12,7 +12,7 @@ func (inst *analysisInstance) buildReportCaclPrepare() {
 			encData = &statisticEncounter{
 				ID:      encounterID,
 				Name:    inst.encounterNames[encounterID],
-				jobsMap: make(map[string]*statisticEncounterJob, len(inst.InpCharJobs)),
+				jobsMap: make(map[string]*statisticEncounterJob, len(ffxiv.JobOrder)),
 			}
 			inst.stat.encountersMap[encounterID] = encData
 		}

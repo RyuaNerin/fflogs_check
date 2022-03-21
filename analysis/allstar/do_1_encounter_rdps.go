@@ -5,9 +5,9 @@ import (
 	"log"
 	"regexp"
 	"strconv"
-	"strings"
 
 	"ffxiv_check/analysis"
+	"ffxiv_check/ffxiv"
 
 	"github.com/getsentry/sentry-go"
 	"github.com/pkg/errors"
@@ -79,11 +79,6 @@ func (inst *analysisInstance) UpdateKrEncounterRdps() bool {
 		}
 
 		for _, rank := range charData.Ranks {
-			_, ok := inst.Jobs[strings.ToUpper(rank.Spec)]
-			if !ok {
-				continue
-			}
-
 			logCount++
 
 			partData, ok := inst.tmplData.partitionsMap[partID]
@@ -94,7 +89,7 @@ func (inst *analysisInstance) UpdateKrEncounterRdps() bool {
 					PartitionIDGlobal: part.Global,
 					PartitionName:     part.Name,
 
-					jobsMap: make(map[string]*tmplDataJob, len(inst.Jobs)),
+					jobsMap: make(map[string]*tmplDataJob, len(ffxiv.JobOrder)),
 				}
 				inst.tmplData.partitionsMap[partID] = partData
 			}

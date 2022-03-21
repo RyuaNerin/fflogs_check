@@ -17,7 +17,6 @@ type analysisInstance struct {
 
 	CharName   string
 	CharServer string
-	Jobs       map[string]bool
 
 	tmplData *tmplData
 	Preset   *preset

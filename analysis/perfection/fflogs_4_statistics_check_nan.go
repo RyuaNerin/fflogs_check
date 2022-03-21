@@ -16,11 +16,10 @@ func (inst *analysisInstance) buildReportCheckNaN() {
 		if math.IsNaN(float64(v)) {
 			msgOnce.Do(func() {
 				err := errors.Errorf(
-					"NaN : %s@%s (%s)\nEnc: %+v\nPartition: %+v\nJobs: %+v",
+					"NaN : %s@%s (%s)\nEnc: %+v\nPartition: %+v",
 					inst.InpCharName, inst.InpCharServer, inst.InpCharRegion,
 					inst.InpEncounterIDs,
 					inst.InpAdditionalPartition,
-					inst.InpCharJobs,
 				)
 
 				fmt.Printf("%+v\n", errors.WithStack(err))

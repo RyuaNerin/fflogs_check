@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"ffxiv_check/analysis"
@@ -63,7 +62,6 @@ func doStat(ctx context.Context, reqData *analysis.RequestData, progress func(p 
 		InpCharName:     reqData.CharName,
 		InpCharServer:   reqData.CharServer,
 		InpCharRegion:   reqData.CharRegion,
-		InpCharJobs:     make(map[string]bool, len(reqData.Jobs)),
 		InpEncounterIDs: make([]int, len(preset.Enc)),
 		InpDifficulty:   preset.Diff,
 
@@ -71,7 +69,7 @@ func doStat(ctx context.Context, reqData *analysis.RequestData, progress func(p 
 		Fights:  make(map[fightKey]*analysisFight),
 
 		encounterNames: make(map[int]string, len(preset.Enc)),
-		encounterRanks: make(map[int]*analysisRank, 1+len(reqData.Jobs)),
+		encounterRanks: make(map[int]*analysisRank, 1+len(ffxiv.JobOrder)),
 
 		progressString: make(chan string),
 
@@ -86,13 +84,6 @@ func doStat(ctx context.Context, reqData *analysis.RequestData, progress func(p 
 	}
 
 	copy(inst.InpEncounterIDs, preset.Enc)
-
-	for _, job := range reqData.Jobs {
-		_, ok := ffxiv.JobOrder[job]
-		if ok {
-			inst.InpCharJobs[strings.ToUpper(job)] = true
-		}
-	}
 
 	inst.InpAdditionalPartition = append(inst.InpAdditionalPartition, preset.Part...)
 
