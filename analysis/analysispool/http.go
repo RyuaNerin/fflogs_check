@@ -42,7 +42,7 @@ func Do(ctx context.Context, ws *websocket.Conn) {
 		ws:         ws,
 		ctx:        ctx,
 		ctxCancel:  ctxCancel,
-		chanResult: make(chan bool),
+		chanResult: make(chan bool, 1),
 	}
 
 	err = ws.ReadJSON(&q.reqData)
@@ -109,6 +109,7 @@ func Do(ctx context.Context, ws *websocket.Conn) {
 		q.Reorder(queueCount)
 
 		select {
+		case <-ctx.Done():
 		case ok := <-q.chanResult:
 			if ok {
 				q.Succ(q.buf)
@@ -116,8 +117,6 @@ func Do(ctx context.Context, ws *websocket.Conn) {
 			} else {
 				q.Error()
 			}
-
-		case <-ctx.Done():
 		}
 	}
 

@@ -91,7 +91,10 @@ func queueWorker() {
 			case "allstar":
 				res = allstar.Do(q.ctx, &q.reqData, q.Progress, q.buf)
 			}
-			q.chanResult <- res
+			select {
+			case <-q.ctx.Done():
+			case q.chanResult <- res:
+			}
 		}
 
 		log.Printf("End: %s@%s", q.reqData.CharName, q.reqData.CharServer)
