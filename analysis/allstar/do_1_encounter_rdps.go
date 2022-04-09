@@ -79,6 +79,10 @@ func (inst *analysisInstance) UpdateKrEncounterRdps() bool {
 		}
 
 		for _, rank := range charData.Ranks {
+			if rank.Spec == "Any" {
+				continue
+			}
+
 			logCount++
 
 			partData, ok := inst.tmplData.partitionsMap[partID]
