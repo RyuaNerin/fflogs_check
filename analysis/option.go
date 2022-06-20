@@ -1,8 +1,6 @@
 package analysis
 
 import (
-	"ffxiv_check/ffxiv"
-	"fmt"
 	"hash/fnv"
 	"strings"
 	"unicode"
@@ -64,17 +62,6 @@ func (rd *RequestData) Hash() uint64 {
 		}
 	}
 
-	var ss ffxiv.SkillSets
-	if rd.CharRegion == "kr" {
-		ss = ffxiv.Korea
-	} else {
-		ss = ffxiv.Global
-	}
-
-	fmt.Fprint(
-		h,
-		ss.Hash, "|",
-	)
 	append(rd.Service)
 	append(rd.Preset)
 	append(rd.CharName)

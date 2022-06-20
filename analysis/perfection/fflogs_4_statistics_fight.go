@@ -15,8 +15,8 @@ func (inst *analysisInstance) buildReportFight() {
 
 		fightTime := fight.EndTime - fight.StartTime
 
-		for _, skillId := range inst.skillSets.Job[fight.Job] {
-			skillInfo := inst.skillSets.Action[skillId]
+		for _, skillId := range inst.gameData.Job[fight.Job] {
+			skillInfo := inst.gameData.Action[skillId]
 
 			switch skillId {
 			case ffxiv.SkillIdReduceDamangeDebuff:

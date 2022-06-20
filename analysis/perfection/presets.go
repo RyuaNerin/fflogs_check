@@ -9,7 +9,11 @@ import (
 type preset struct {
 	Enc  []int `json:"enc"`
 	Diff int   `json:"diff"`
-	Part []int `json:"part"`
+	Part struct {
+		Global []int `json:"global"`
+		Korea  []int `json:"korea"`
+	} `json:"part"`
+	Version string `json:"ver"`
 }
 
 var presets map[string]preset

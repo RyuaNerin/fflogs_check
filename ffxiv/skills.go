@@ -3,10 +3,10 @@ package ffxiv
 import (
 	"encoding/csv"
 	"fmt"
+	"hash"
 	"hash/fnv"
 	"io"
 	"os"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -21,10 +21,13 @@ const (
 	PotionBuffTime = 30 * 1000
 )
 
-type SkillSets struct {
-	Job    map[string][]int
-	Action map[int]SkillData
-	Hash   uint32
+type GameData struct {
+	Version string
+	Job     map[string][]int
+	Action  map[int]SkillData
+	Hash    uint32
+
+	h hash.Hash32
 }
 
 type SkillData struct {
@@ -36,52 +39,64 @@ type SkillData struct {
 	OrderIndex      int
 	WithDowntime    bool
 	ContainsInScore bool
+
+	Level int
 }
 
 var (
-	Korea = SkillSets{
-		Job:    make(map[string][]int),
-		Action: make(map[int]SkillData),
-	}
-	Global = SkillSets{
-		Job:    make(map[string][]int),
-		Action: make(map[int]SkillData),
-	}
+	GameDataMap = make(map[string]*GameData)
 )
 
 func init() {
-	loadSkills("ffxiv/resources/skills.csv")
-	loadActions("ffxiv/resources/exd/action.exh_en.csv", 40, &Global) // BA, AO
-	loadActions("ffxiv/resources/exd/action.exh_ko.csv", 39, &Korea)  // AZ, AN
-
-	update(&Korea, SkillIdDeath, "사망", "015000-015010.png", 0)
-	update(&Global, SkillIdDeath, "Death", "015000-015010.png", 0)
-
-	update(&Korea, SkillIdPotion, "강화약", "016000-016203.png", 270)
-	update(&Global, SkillIdPotion, "Medicated", "016000-016203.png", 270)
-
-	update(&Korea, SkillIdReduceDamangeDebuff, "주는 피해량 감소", "015000-015520.png", 0)
-	update(&Global, SkillIdReduceDamangeDebuff, "Damage Down", "015000-015520.png", 0)
-
-	calcVerison(&Global)
-	calcVerison(&Korea)
+	GameDataMap["54"] = load("54", "ffxiv/resources/skills_54.csv", "ffxiv/resources/exd/skills_54.csv")
+	GameDataMap["60"] = load("60", "ffxiv/resources/skills_60.csv", "ffxiv/resources/exd/skills_60.csv")
 }
 
-func update(ss *SkillSets, id int, name string, icon string, cooldown int) {
-	v := ss.Action[id]
+func load(version, csv, exd string) *GameData {
+	gd := &GameData{
+		Job:     make(map[string][]int),
+		Action:  make(map[int]SkillData),
+		Version: version,
+		h:       fnv.New32(),
+	}
+
+	gd.loadCsv(csv)
+	gd.loadExd(exd, 40) // AO
+
+	gd.update(SkillIdDeath, "사망", "015000-015010.png", 0)
+	gd.update(SkillIdPotion, "강화약", "016000-016203.png", 270)
+	gd.update(SkillIdReduceDamangeDebuff, "주는 피해량 감소", "015000-015520.png", 0)
+
+	gd.Hash = gd.h.Sum32()
+
+	return gd
+}
+
+func (gd *GameData) update(id int, name string, icon string, cooldown int) {
+	v := gd.Action[id]
 	v.Name = name
 	v.IconUrl = icon
 	v.Cooldown = cooldown
 
-	ss.Action[id] = v
+	gd.Action[id] = v
 }
 
-func loadSkills(path string) {
+func (gd *GameData) loadCsv(path string) {
 	fs, err := os.Open(path)
 	if err != nil {
 		panic(err)
 	}
 	defer fs.Close()
+
+	_, err = io.Copy(gd.h, fs)
+	if err != nil && err != io.EOF {
+		panic(err)
+	}
+
+	_, err = fs.Seek(0, os.SEEK_SET)
+	if err != nil {
+		panic(err)
+	}
 
 	sr, _ := utfbom.Skip(fs)
 
@@ -106,8 +121,7 @@ func loadSkills(path string) {
 				columnJob[i] = fmt.Sprint(d[i])
 			}
 			for i := 7; i < len(d); i++ {
-				Korea.Job[d[i]] = nil
-				Global.Job[d[i]] = nil
+				gd.Job[d[i]] = nil
 			}
 
 		case "1":
@@ -120,45 +134,40 @@ func loadSkills(path string) {
 				panic(err)
 			}
 
-			if d[3] != "" {
-				Global.Action[id] = SkillData{
-					ID:              id,
-					OrderIndex:      orderIndex,
-					WithDowntime:    d[5] != "",
-					ContainsInScore: d[6] != "",
-				}
-			}
-			if d[4] != "" {
-				Korea.Action[id] = SkillData{
-					ID:              id,
-					OrderIndex:      orderIndex,
-					WithDowntime:    d[5] != "",
-					ContainsInScore: d[6] != "",
-				}
+			gd.Action[id] = SkillData{
+				ID:              id,
+				OrderIndex:      orderIndex,
+				WithDowntime:    d[3] != "",
+				ContainsInScore: d[4] != "",
 			}
 
 			orderIndex++
 
-			for i := 7; i < len(d); i++ {
+			for i := 5; i < len(d); i++ {
 				if d[i] != "" {
-					if d[3] != "" {
-						Global.Job[columnJob[i]] = append(Global.Job[columnJob[i]], id)
-					}
-					if d[4] != "" {
-						Korea.Job[columnJob[i]] = append(Korea.Job[columnJob[i]], id)
-					}
+					gd.Job[columnJob[i]] = append(gd.Job[columnJob[i]], id)
 				}
 			}
 		}
 	}
 }
 
-func loadActions(path string, columnCooldown int, ss *SkillSets) {
+func (gd *GameData) loadExd(path string, columnCooldown int) {
 	fs, err := os.Open(path)
 	if err != nil {
 		panic(err)
 	}
 	defer fs.Close()
+
+	_, err = io.Copy(gd.h, fs)
+	if err != nil && err != io.EOF {
+		panic(err)
+	}
+
+	_, err = fs.Seek(0, os.SEEK_SET)
+	if err != nil {
+		panic(err)
+	}
 
 	sr, _ := utfbom.Skip(fs)
 
@@ -181,7 +190,7 @@ func loadActions(path string, columnCooldown int, ss *SkillSets) {
 			continue
 		}
 
-		md, ok := ss.Action[index]
+		md, ok := gd.Action[index]
 		if !ok {
 			continue
 		}
@@ -200,33 +209,6 @@ func loadActions(path string, columnCooldown int, ss *SkillSets) {
 		md.Cooldown = cooldown / 10
 		md.IconUrl = fmt.Sprintf("%06d-%06d.png", (icon/1000)*1000, icon)
 
-		ss.Action[index] = md
+		gd.Action[index] = md
 	}
-}
-
-func calcVerison(ss *SkillSets) {
-	h := fnv.New32a()
-
-	jobArr := make([]string, 0, len(JobOrder))
-	for job := range JobOrder {
-		jobArr = append(jobArr, job)
-	}
-	sort.Slice(
-		jobArr,
-		func(i, k int) bool {
-			return JobOrder[jobArr[i]] < JobOrder[jobArr[k]]
-		},
-	)
-
-	for _, job := range jobArr {
-		fmt.Fprintf(h, "%s\n", job)
-
-		for _, skillId := range ss.Job[job] {
-			action := ss.Action[skillId]
-
-			fmt.Fprintf(h, "%d: %+v\n", skillId, action)
-		}
-	}
-
-	ss.Hash = h.Sum32()
 }

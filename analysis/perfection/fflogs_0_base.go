@@ -77,15 +77,16 @@ func doStat(ctx context.Context, reqData *analysis.RequestData, progress func(p 
 	}
 	defer close(inst.progressString)
 
-	if reqData.CharRegion == "kr" {
-		inst.skillSets = &ffxiv.Korea
-	} else {
-		inst.skillSets = &ffxiv.Global
-	}
+	inst.gameData = ffxiv.GameDataMap[preset.Version]
 
 	copy(inst.InpEncounterIDs, preset.Enc)
 
-	inst.InpAdditionalPartition = append(inst.InpAdditionalPartition, preset.Part...)
+	switch reqData.CharRegion {
+	case "kr":
+		inst.InpAdditionalPartition = append(inst.InpAdditionalPartition, preset.Part.Korea...)
+	case "gl":
+		inst.InpAdditionalPartition = append(inst.InpAdditionalPartition, preset.Part.Global...)
+	}
 
 	chanDone := make(chan struct{}, 1)
 	go func() {

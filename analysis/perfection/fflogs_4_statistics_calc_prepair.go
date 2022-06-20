@@ -25,7 +25,7 @@ func (inst *analysisInstance) buildReportCaclPrepare() {
 			encJobData = &statisticEncounterJob{
 				ID:        ffxiv.JobOrder[job],
 				Job:       job,
-				skillsMap: make(map[int]*statisticSkill, len(inst.skillSets.Job[job])),
+				skillsMap: make(map[int]*statisticSkill, len(inst.gameData.Job[job])),
 			}
 			encData.jobsMap[job] = encJobData
 		}
@@ -78,8 +78,8 @@ func (inst *analysisInstance) buildReportCaclPrepare() {
 		}
 		jobScore.Kills++
 
-		for _, skillId := range inst.skillSets.Job[fightData.Job] {
-			skillInfo := inst.skillSets.Action[skillId]
+		for _, skillId := range inst.gameData.Job[fightData.Job] {
+			skillInfo := inst.gameData.Action[skillId]
 
 			encCurJobSkill := getBuffUsage(encCurJob, skillInfo)
 			encAllJobSkill := getBuffUsage(encAllJob, skillInfo)

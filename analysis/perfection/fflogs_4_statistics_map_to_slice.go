@@ -34,7 +34,7 @@ func (inst *analysisInstance) buildReportMapToSlice() {
 			sort.Slice(
 				encJobData.Skills,
 				func(i, k int) bool {
-					return inst.skillSets.Action[encJobData.Skills[i].Info.ID].OrderIndex < inst.skillSets.Action[encJobData.Skills[k].Info.ID].OrderIndex
+					return inst.gameData.Action[encJobData.Skills[i].Info.ID].OrderIndex < inst.gameData.Action[encJobData.Skills[k].Info.ID].OrderIndex
 				},
 			)
 		}

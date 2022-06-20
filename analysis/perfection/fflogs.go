@@ -44,7 +44,7 @@ type analysisInstance struct {
 
 	progressString chan string
 
-	skillSets *ffxiv.SkillSets
+	gameData *ffxiv.GameData
 }
 type analysisReport struct {
 	ReportID string
@@ -54,8 +54,8 @@ type analysisReport struct {
 type analysisFight struct {
 	ReportID  string
 	FightID   int
-	StartTime int
-	EndTime   int
+	StartTime int // ms
+	EndTime   int // ms
 
 	DoneSummary bool
 	DoneEvents  bool

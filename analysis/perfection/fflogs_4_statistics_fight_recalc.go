@@ -2,8 +2,7 @@ package perfection
 
 import (
 	"math"
-
-	"ffxiv_check/ffxiv"
+	"strings"
 )
 
 // 최대 사용 가능한 횟수들 재 계산하는 부분...
@@ -32,11 +31,11 @@ func (inst *analysisInstance) buildReportFightRecalc() {
 	setDefaultCharge := func(fightData *analysisFight, skillId int, defaultValue int) {
 		sd, ok := fightData.skillData[skillId]
 		if ok {
-			sd.MaxForPercent = defaultValue + int(math.Ceil(float64(fightData.EndTime-fightData.StartTime)/1000.0/float64(inst.skillSets.Action[skillId].Cooldown)))
+			sd.MaxForPercent = defaultValue + int(math.Ceil(float64(fightData.EndTime-fightData.StartTime)/1000.0/float64(inst.gameData.Action[skillId].Cooldown)))
 		}
 	}
 
-	isGlobal := inst.skillSets == &ffxiv.Global
+	isEndwalker := strings.HasPrefix(inst.gameData.Version, "6")
 
 	for _, fightData := range inst.Fights {
 		if !fightData.DoneEvents || !fightData.DoneSummary {
@@ -48,7 +47,7 @@ func (inst *analysisInstance) buildReportFightRecalc() {
 			gauge := fightData.AutoAttacks * 5
 
 			// 효월은 100 충전해서 시작
-			if inst.skillSets == &ffxiv.Global {
+			if isEndwalker {
 				gauge += 100
 			}
 
@@ -70,7 +69,7 @@ func (inst *analysisInstance) buildReportFightRecalc() {
 			)
 
 		case "DarkKnight":
-			if isGlobal {
+			if isEndwalker {
 				setDefaultCharge(fightData, 25754, 2) // Oblation 2회
 			}
 
@@ -82,7 +81,7 @@ func (inst *analysisInstance) buildReportFightRecalc() {
 				25758, // Heart of Corundum
 			)
 
-			if isGlobal {
+			if isEndwalker {
 				setDefaultCharge(fightData, 16151, 2) // 오로라 2회
 			}
 
@@ -94,7 +93,7 @@ func (inst *analysisInstance) buildReportFightRecalc() {
 				16534, // 황마
 			)
 
-			if isGlobal {
+			if isEndwalker {
 				setDefaultCharge(fightData, 7430, 2)  // 실바람 2회
 				setDefaultCharge(fightData, 74322, 2) // 신축 2회
 			}
@@ -115,7 +114,7 @@ func (inst *analysisInstance) buildReportFightRecalc() {
 				delete(fightData.skillData, 17152)
 			}
 
-			if isGlobal {
+			if isEndwalker {
 				setDefaultCharge(fightData, 16556, 2) // 천궁의 교차 2회
 				setDefaultCharge(fightData, 3590, 2)  // 점지 2회
 
@@ -151,6 +150,17 @@ func (inst *analysisInstance) buildReportFightRecalc() {
 
 		case "Summoner":
 			setDefaultCharge(fightData, 25857, 2) // Magick Barrier 2회
+
+			sd, ok := fightData.skillData[25830] // 재생의 불꽃
+			if ok {
+				sd.MaxForPercent = int(math.Floor(float64(fightData.EndTime-fightData.StartTime)/1000.0-1) / 120)
+			}
+
+		case "Dancer":
+			if isEndwalker {
+				improvisation := fightData.skillData[16014].MaxForPercent // 즉흥 연기
+				fightData.skillData[25789].MaxForPercent = improvisation  // 즉흥 연기 물무리
+			}
 		}
 	}
 }

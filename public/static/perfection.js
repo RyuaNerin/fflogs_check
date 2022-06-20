@@ -7,15 +7,17 @@ addHandler(
     function() {
         let preset = '';
         switch (document.querySelector('input[name="encounter"]:checked').value) {
-        case 'asphodelos': preset = "6.0"; break;
+        case 'asphodelos': preset = "60"; break;
+        case 'trial_54'  : preset = "54_trial"; break;
+        case 'trial_60'  : preset = "60_trial"; break;
         case 'ultimate_6': preset = "6_ulti"; break;
         case 'ultimate_5': preset = "5_ulti"; break;
 
         case 'eden_promise':
             preset =
                 document.getElementById('includeEcho').checked
-                ? "5.4_echo"
-                : "5.4"
+                ? "54_echo"
+                : "54"
             break;
         }
 
