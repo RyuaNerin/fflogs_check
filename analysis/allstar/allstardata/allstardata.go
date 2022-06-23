@@ -32,6 +32,8 @@ var (
 		"Samurai":     15,
 		"Dancer":      16,
 		"Gunbreaker":  17,
+		"Reaper":      18,
+		"Sage":        19,
 	}
 )
 

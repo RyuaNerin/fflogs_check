@@ -31,13 +31,55 @@
             { "name": "5.5"       , "korea": 23, "global": 19 }
         ]
     },
-    "5ultimate4": {
+    "5ultimate": {
         "name": "절 토벌전 (홍련)",
         "zone": 30,
         "difficulty": 100,
         "encounter": [
             { "id": 1048, "name": "절 알테마 웨폰 파괴작전" },
             { "id": 1047, "name": "절 바하무트 토벌전" }
+        ],
+        "partition": [
+            { "name": "All Patches" , "korea": 5, "global": 1 }
+        ]
+    },
+    
+    "60asph": {
+        "name": "판데모니움: 변옥편",
+        "use_allstar_rank": true,
+        "zone": 44,
+        "difficulty": 101,
+        "encounter": [
+            { "id": 78, "name": "에리크토니오스" },
+            { "id": 79, "name": "히포캄포스" },
+            { "id": 80, "name": "페넥스" },
+            { "id": 81, "name": "헤스페로스" },
+            { "id": 82, "name": "헤스페로스 II" }
+        ],
+        "partition": [
+            { "name": "6.0" , "korea":  5, "global":  1 },
+            { "name": "6.1" , "korea": 11, "global":  7 }
+        ]
+    },
+    "6ultimate6": {
+        "name": "절 토벌전 (효월)",
+        "zone": 32,
+        "difficulty": 100,
+        "encounter": [
+            { "id": 1050, "name": "절 알렉산더 토벌전" }
+        ],
+        "partition": [
+            { "name": "6.1" , "korea": 5, "global": 1 }
+        ]
+    },
+    "6ultimate": {
+        "name": "절 토벌전 (칠흑, 홍련)",
+        "zone": 43,
+        "difficulty": 100,
+        "encounter": [
+            { "id": 1060, "name": "절 바하무트 토벌전" },
+            { "id": 1061, "name": "절 알테마 웨폰 파괴작전" },
+            { "id": 1062, "name": "절 알렉산더 토벌전" }
         ],
         "partition": [
             { "name": "All Patches" , "korea": 5, "global": 1 }

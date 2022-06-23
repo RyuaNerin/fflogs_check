@@ -105,9 +105,11 @@ func (inst *analysisInstance) UpdateKrEncounterRank() bool {
 			partData.jobsMap[td.Spec] = jobData
 		}
 
-		jobData.Korea.Allstar = resp.AllStars[0].Points
-		jobData.Korea.Rank = resp.AllStars[0].Rank
-		jobData.Korea.RankPercent = resp.AllStars[0].RankPercent
+		if len(resp.AllStars) > 0 {
+			jobData.Korea.Allstar = resp.AllStars[0].Points
+			jobData.Korea.Rank = resp.AllStars[0].Rank
+			jobData.Korea.RankPercent = resp.AllStars[0].RankPercent
+		}
 
 		for _, respEnc := range resp.Rankings {
 			if respEnc.Allstar == nil {
