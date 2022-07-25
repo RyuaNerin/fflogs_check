@@ -8,7 +8,6 @@ import (
 	"sync"
 
 	"ffxiv_check/analysis"
-	"ffxiv_check/analysis/allstar"
 	"ffxiv_check/analysis/perfection"
 	"ffxiv_check/share"
 
@@ -88,8 +87,6 @@ func queueWorker() {
 			switch q.reqData.Service {
 			case "perfection":
 				res = perfection.Do(q.ctx, &q.reqData, q.Progress, q.buf)
-			case "allstar":
-				res = allstar.Do(q.ctx, &q.reqData, q.Progress, q.buf)
 			}
 			select {
 			case <-q.ctx.Done():
