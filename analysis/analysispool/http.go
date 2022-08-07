@@ -31,6 +31,7 @@ func Do(ctx context.Context, ws *websocket.Conn) {
 	ctx, ctxCancel := context.WithCancel(ctx)
 	defer ctxCancel()
 
+	ws.SetWriteDeadline(time.Now().Add(5 * time.Second))
 	err := ws.WriteMessage(websocket.TextMessage, eventReady)
 	if err != nil {
 		sentry.CaptureException(err)
@@ -45,6 +46,7 @@ func Do(ctx context.Context, ws *websocket.Conn) {
 		chanResult: make(chan bool, 1),
 	}
 
+	ws.SetReadDeadline(time.Now().Add(5 * time.Second))
 	err = ws.ReadJSON(&q.reqData)
 	if err != nil {
 		sentry.CaptureException(err)
@@ -53,6 +55,7 @@ func Do(ctx context.Context, ws *websocket.Conn) {
 	}
 	go func() {
 		for {
+			ws.SetReadDeadline(time.Now().Add(5 * time.Second))
 			_, r, err := ws.NextReader()
 			if err != nil {
 				return
@@ -79,6 +82,7 @@ func Do(ctx context.Context, ws *websocket.Conn) {
 			for {
 				select {
 				case <-ticker.C:
+					ws.SetWriteDeadline(time.Now().Add(5 * time.Second))
 					err := ws.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(5*time.Second))
 					if err != nil {
 						if err != websocket.ErrCloseSent {
@@ -106,27 +110,30 @@ func Do(ctx context.Context, ws *websocket.Conn) {
 		queueCount := len(queue)
 		queueLock.Unlock()
 
-		q.Reorder(queueCount)
-
-		select {
-		case <-ctx.Done():
-		case ok := <-q.chanResult:
-			if ok {
-				q.Succ(q.buf)
-				csTemplate.SaveRaw(h, q.buf)
-			} else {
-				q.Error()
+		if q.Reorder(queueCount) {
+			select {
+			case <-ctx.Done():
+			case ok := <-q.chanResult:
+				if ok {
+					csTemplate.SaveRaw(h, q.buf)
+					q.Succ(q.buf)
+				} else {
+					q.Error()
+				}
 			}
 		}
 	}
 
-	time.Sleep(time.Second)
+	go func() {
+		time.Sleep(5 * time.Second)
 
-	err = ws.WriteMessage(websocket.CloseMessage, websockEmptyClosure)
-	if err != nil && err != websocket.ErrCloseSent {
-		sentry.CaptureException(err)
-		fmt.Printf("%+v\n", errors.WithStack(err))
-	}
+		ws.SetWriteDeadline(time.Now().Add(5 * time.Second))
+		err = ws.WriteMessage(websocket.CloseMessage, websockEmptyClosure)
+		if err != nil && err != websocket.ErrCloseSent {
+			sentry.CaptureException(err)
+			fmt.Printf("%+v\n", errors.WithStack(err))
+		}
 
-	ws.Close()
+		ws.Close()
+	}()
 }

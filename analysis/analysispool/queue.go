@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"sync"
+	"time"
 
 	"ffxiv_check/analysis"
 	"ffxiv_check/analysis/perfection"
@@ -121,7 +122,7 @@ func (q *queueData) MessageBytes(data []byte) error {
 	return q.ws.WriteMessage(websocket.TextMessage, data)
 }
 
-func (q *queueData) Reorder(order int) {
+func (q *queueData) Reorder(order int) bool {
 	resp := struct {
 		Event string `json:"event"`
 		Data  int    `json:"data"`
@@ -130,12 +131,16 @@ func (q *queueData) Reorder(order int) {
 		Data:  order,
 	}
 
+	q.ws.SetWriteDeadline(time.Now().Add(5 * time.Second))
 	err := q.MessageJson(&resp)
 	if err != nil {
 		sentry.CaptureException(err)
 		fmt.Printf("%+v\n", errors.WithStack(err))
 		q.ctxCancel()
+		return false
 	}
+
+	return true
 }
 
 func (q *queueData) Start() {
@@ -167,6 +172,7 @@ func (q *queueData) Progress(s string) {
 }
 
 func (q *queueData) Error() {
+	q.ws.SetWriteDeadline(time.Now().Add(5 * time.Second))
 	err := q.MessageBytes(eventError)
 	if err != nil {
 		if err != websocket.ErrCloseSent {
@@ -186,6 +192,7 @@ func (q *queueData) Succ(buf *bytes.Buffer) {
 		Data:  share.B2s(buf.Bytes()),
 	}
 
+	q.ws.SetWriteDeadline(time.Now().Add(5 * time.Second))
 	err := q.MessageJson(resp)
 	if err != nil {
 		sentry.CaptureException(err)
