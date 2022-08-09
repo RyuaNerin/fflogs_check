@@ -124,16 +124,14 @@ func Do(ctx context.Context, ws *websocket.Conn) {
 		}
 	}
 
-	go func() {
-		time.Sleep(5 * time.Second)
+	time.Sleep(3 * time.Second)
 
-		ws.SetWriteDeadline(time.Now().Add(5 * time.Second))
-		err = ws.WriteMessage(websocket.CloseMessage, websockEmptyClosure)
-		if err != nil && err != websocket.ErrCloseSent {
-			sentry.CaptureException(err)
-			fmt.Printf("%+v\n", errors.WithStack(err))
-		}
+	ws.SetWriteDeadline(time.Now().Add(5 * time.Second))
+	err = ws.WriteMessage(websocket.CloseMessage, websockEmptyClosure)
+	if err != nil && err != websocket.ErrCloseSent {
+		sentry.CaptureException(err)
+		fmt.Printf("%+v\n", errors.WithStack(err))
+	}
 
-		ws.Close()
-	}()
+	ws.Close()
 }
