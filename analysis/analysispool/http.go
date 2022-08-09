@@ -74,7 +74,7 @@ func Do(ctx context.Context, ws *websocket.Conn) {
 
 	h := q.reqData.Hash()
 	if csTemplate.LoadRaw(h, q.buf) {
-		q.Succ(q.buf)
+		q.Succ(q.buf.Bytes())
 	} else {
 		go func() {
 			ticker := time.NewTicker(5 * time.Second)
