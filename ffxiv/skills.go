@@ -93,7 +93,7 @@ func (gd *GameData) loadCsv(path string) {
 		panic(err)
 	}
 
-	_, err = fs.Seek(0, os.SEEK_SET)
+	_, err = fs.Seek(0, io.SeekStart)
 	if err != nil {
 		panic(err)
 	}
@@ -164,7 +164,7 @@ func (gd *GameData) loadExd(path string, columnCooldown int) {
 		panic(err)
 	}
 
-	_, err = fs.Seek(0, os.SEEK_SET)
+	_, err = fs.Seek(0, io.SeekStart)
 	if err != nil {
 		panic(err)
 	}

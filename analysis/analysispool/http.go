@@ -115,8 +115,8 @@ func Do(ctx context.Context, ws *websocket.Conn) {
 			case <-ctx.Done():
 			case ok := <-q.chanResult:
 				if ok {
-					csTemplate.SaveRaw(h, q.buf)
-					q.Succ(q.buf)
+					csTemplate.SaveRaw(h, bytes.NewReader(q.buf.Bytes()))
+					q.Succ(q.buf.Bytes())
 				} else {
 					q.Error()
 				}

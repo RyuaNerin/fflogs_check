@@ -183,13 +183,13 @@ func (q *queueData) Error() {
 	}
 }
 
-func (q *queueData) Succ(buf *bytes.Buffer) {
+func (q *queueData) Succ(data []byte) {
 	resp := struct {
 		Event string `json:"event"`
 		Data  string `json:"data"`
 	}{
 		Event: "complete",
-		Data:  share.B2s(buf.Bytes()),
+		Data:  share.B2s(data),
 	}
 
 	q.ws.SetWriteDeadline(time.Now().Add(5 * time.Second))
