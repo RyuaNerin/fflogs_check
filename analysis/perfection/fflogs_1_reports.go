@@ -2,7 +2,6 @@ package perfection
 
 import (
 	"fmt"
-	"log"
 	"regexp"
 	"sort"
 	"strconv"
@@ -19,7 +18,6 @@ var (
 )
 
 func (inst *analysisInstance) updateReports() bool {
-	log.Printf("updateReports %s@%s\n", inst.InpCharName, inst.InpCharServer)
 	inst.progress("[1 / 3] 전투 기록 가져오는 중...")
 
 	var resp struct {

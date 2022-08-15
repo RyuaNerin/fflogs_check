@@ -3,7 +3,6 @@ package perfection
 import (
 	"context"
 	"fmt"
-	"log"
 	"sort"
 	"sync/atomic"
 
@@ -15,7 +14,6 @@ import (
 )
 
 func (inst *analysisInstance) updateEvents() bool {
-	log.Printf("updateEvents %s@%s\n", inst.InpCharName, inst.InpCharServer)
 	type TodoFightEvent struct {
 		Done      bool
 		StartTime int
@@ -290,7 +288,6 @@ func (inst *analysisInstance) updateEvents() bool {
 	}
 	progress := func() {
 		p := progressPercent()
-		log.Printf("updateEvents %s@%s (%.2f %%)\n", inst.InpCharName, inst.InpCharServer, progressPercent())
 		inst.progress("[3 / 3] 전투 정보 분석 중... %.2f %%", p)
 	}
 

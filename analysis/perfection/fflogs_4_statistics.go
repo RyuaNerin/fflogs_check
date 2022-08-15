@@ -2,15 +2,12 @@ package perfection
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"ffxiv_check/ffxiv"
 )
 
 func (inst *analysisInstance) buildReport() {
-	log.Printf("buildReport %s@%s\n", inst.InpCharName, inst.InpCharServer)
-
 	inst.buildReportFight()
 	inst.buildReportFightRecalc()
 

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"log"
 	"sync/atomic"
 
 	"ffxiv_check/analysis"
@@ -15,7 +14,6 @@ import (
 )
 
 func (inst *analysisInstance) updateFights() bool {
-	log.Printf("updateFights %s@%s\n", inst.InpCharName, inst.InpCharServer)
 	type TodoData struct {
 		Hash     string
 		ReportID string
@@ -149,7 +147,6 @@ func (inst *analysisInstance) updateFights() bool {
 	}
 	progress := func() {
 		p := progressPercent()
-		log.Printf("updateFights %s@%s (%.2f %%)\n", inst.InpCharName, inst.InpCharServer, p)
 		inst.progress("[2 / 3] 전투 정보 가져오는 중... %.2f %%", p)
 	}
 
