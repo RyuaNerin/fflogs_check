@@ -1,0 +1,76 @@
+{{ define "ScoreClassF" }}
+    {{      if eq $ 100.0 }}r100
+    {{ else if ge $  99.0 }}r99
+    {{ else if ge $  95.0 }}r95
+    {{ else if ge $  75.0 }}r75
+    {{ else if ge $  50.0 }}r50
+    {{ else if ge $  25.0 }}r25
+    {{ else if ge $   0.0 }}r0
+    {{ else               }}
+    {{ end }}
+{{ end }}
+
+
+<h1>{{ $.CharName }}@{{ $.CharServer }} ({{ $.CharRegion }})</h1>
+
+<div class="mb-3">{{ $.UpdatedAt }} 기준</div>
+
+{{ if eq $.State "notfound" }}
+<div class="alert alert-danger" role="alert">
+    캐릭터를 찾을 수 없습니다.
+</div>
+{{ else if eq $.State "invalid" }}
+<div class="alert alert-danger" role="alert">
+    잘못된 요청입니다.
+</div>
+{{ else }}
+    <div>
+        <a href="{{ $.FFLogsLink }}" class="text-decoration-none fw-bold" target="_blank">FFLogs 열기</a>
+    </div>
+
+    {{ if eq $.State "hidden" }}
+    <div class="alert alert-danger" role="alert">
+        비공개 캐릭터입니다.
+    </div>
+    {{ else if eq $.State "nolog" }}
+    <div class="alert alert-danger" role="alert">
+        힐러 클리어 기록이 없습니다.
+    </div>
+    {{ else }}
+        <div class="chart-contianer">
+            <canvas id="chart" width="400" height="400"></canvas>
+        </div>
+
+        <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
+            {{ range $i, $enc := $.Encounter }}
+            <button type="button" class="btn btn-outline-primary btn-sm chart-encounter" data-encounter-id="{{ $enc.EncounterID }}">
+                {{ $enc.EncounterName }} ({{ $enc.Kills }} Kills)
+            </button>
+            {{ end }}
+        </div>
+
+        <script>
+            refreshGraph({
+                charname: "{{ $.CharName }}@{{ $.CharServer }}",
+                encounter: {
+                    {{ range $i, $enc := $.Encounter }}
+                        {{ $enc.EncounterID }}: {
+                            name: "{{ $enc.EncounterName }}",
+                            kills: {{ $enc.Kills }}
+                        },
+                    {{ end }}
+                },
+                job: {
+                    {{ range $jobIdx, $jobName := $.JobList }}
+                        {{ $jobIdx }}: "{{ $jobName }}",
+                    {{ end }}
+                },
+                data: {
+                    {{ range $i, $enc := $.Encounter }}
+                        {{ $enc.EncounterID }}: {{ json $enc.Data }},
+                    {{ end }}
+                }
+            });
+        </script>
+    {{ end }}
+{{ end }}

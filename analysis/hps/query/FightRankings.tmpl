@@ -1,0 +1,9 @@
+{
+	reportData {
+		{{ range $ }}
+		{{ .Key }}: report(code: "{{ .ReportCode }}") {
+			rankings(playerMetric: hps, timeframe: Today, fightIDs: [{{ .FightIDs }}])
+		}
+		{{ end }}
+	}
+}

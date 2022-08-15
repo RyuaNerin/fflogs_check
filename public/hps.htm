@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+
+    <title>FFLogs Check :: HPS 분석</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="publisher" href="https://ff14.ryuar.in/">
+
+    <meta name="twitter:card"        content="summary">
+    <meta name="twitter:site"        content="@RyuaNerin">
+	<meta name="twitter:creator"     content="@RyuaNerin">
+	<meta name="twitter:title"       content="FFLogs Check :: HPS 분석">
+	<meta name="twitter:description" content="파트너 힐러와의 HPS 순위를 비교합니다.">
+
+	<meta property="og:title"       content="FFLogs Check :: HPS 분석">
+	<meta property="og:description" content="파트너 힐러와의 HPS 순위를 비교합니다.">
+    <meta property="og:url"         content="https://ff14.ryuar.in/">
+	<meta property="og:type"        content="website">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <link href="./static/index.css" rel="stylesheet" />
+</head>
+<body>
+    <div class="container-sm">
+        <h1 class="fw-bold"><a href="/" class="text-decoration-none">FFLogs Check</a> :: HPS 분석</h1>
+
+        <div class="fs-6 my-3">만든이 : <a href="//ryuar.in/" class="text-decoration-none fw-bold" target="_blank">류아네린 (@RyuaNerin, 륜아린@모그리)</a></div>
+
+        <div>이 페이지는 데스크탑 환경에 최적화되어 있습니다.</div>
+
+        <hr>
+
+        <div class="row">
+            <div class="col-12 col-md-5 col-lg-4 mb-3">
+                <label class="form-label fs-5 fw-bold">분석할 레이드</label>
+
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="" id="includeEcho" checked>
+                    <label class="form-check-label" for="includeEcho">초월하는 힘 포함</label>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">효월의 종언</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="encounter" id="zoneAsphodelos" value="asphodelos" checked>
+                        <label class="form-check-label" for="zoneAsphodelos">마의 전당 판데모니움: 변옥편</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="encounter" id="zoneUltimate_6" value="ultimate_6">
+                        <label class="form-check-label" for="zoneUltimate_6">절 토벌전</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="encounter" id="zoneTrial_60" value="trial_60">
+                        <label class="form-check-label" for="zoneTrial_60">극 토벌전 1 (하이델린, 조디아크, 종언) </label>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold">칠흑의 반역자</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="encounter" id="zoneEdenPromise" value="eden_promise">
+                        <label class="form-check-label" for="zoneEdenPromise">희망의 낙원 에덴: 재생편</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="encounter" id="zoneUltimate_5" value="ultimate_5">
+                        <label class="form-check-label" for="zoneUltimate_5">절 토벌전</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="encounter" id="zoneTrial_54" value="trial_54">
+                        <label class="form-check-label" for="zoneTrial_54">극 토벌전3 (에메랄드, 다이아몬드)</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-6 col-md-4 col-lg-4 mb-3">
+                <label for="charName" class="form-label fs-5 fw-bold">캐릭터 이름</label>
+                <input type="text" class="form-control" id="charName" name="charName">
+            </div>
+
+            <div class="col-6 col-md-3 col-lg-4 mb-3">
+                <label for="charServer" class="form-label fs-5 fw-bold">캐릭터 서버</label>
+                <select class="form-select" id="charServer">
+                    <option value="kr_Moogle" selected>모그리 (한국)</option>
+                    <option value="kr_Carbuncle">카벙클 (한국)</option>
+                    <option value="kr_Chocobo">초코보 (한국)</option>
+                    <option value="kr_Tonberry">톤베리 (한국)</option>
+                    <option value="kr_Fenrir">펜리르 (한국)</option>
+                    
+                    <option value="jp_Aegis">Aegis (JP)</option>
+                    <option value="jp_Alexander">Alexander (JP)</option>
+                    <option value="jp_Anima">Anima (JP)</option>
+                    <option value="jp_Asura">Asura (JP)</option>
+                    <option value="jp_Atomos">Atomos (JP)</option>
+                    <option value="jp_Bahamut">Bahamut (JP)</option>
+                    <option value="jp_Belias">Belias (JP)</option>
+                    <option value="jp_Carbuncle">Carbuncle (JP)</option>
+                    <option value="jp_Chocobo">Chocobo (JP)</option>
+                    <option value="jp_Durandal">Durandal (JP)</option>
+                    <option value="jp_Fenrir">Fenrir (JP)</option>
+                    <option value="jp_Garuda">Garuda (JP)</option>
+                    <option value="jp_Gungnir">Gungnir (JP)</option>
+                    <option value="jp_Hades">Hades (JP)</option>
+                    <option value="jp_Ifrit">Ifrit (JP)</option>
+                    <option value="jp_Ixion">Ixion (JP)</option>
+                    <option value="jp_Kujata">Kujata (JP)</option>
+                    <option value="jp_Mandragora">Mandragora (JP)</option>
+                    <option value="jp_Masamune">Masamune (JP)</option>
+                    <option value="jp_Pandaemonium">Pandaemonium (JP)</option>
+                    <option value="jp_Ramuh">Ramuh (JP)</option>
+                    <option value="jp_Ridill">Ridill (JP)</option>
+                    <option value="jp_Shinryu">Shinryu (JP)</option>
+                    <option value="jp_Tiamat">Tiamat (JP)</option>
+                    <option value="jp_Titan">Titan (JP)</option>
+                    <option value="jp_Tonberry">Tonberry (JP)</option>
+                    <option value="jp_Typhon">Typhon (JP)</option>
+                    <option value="jp_Ultima">Ultima (JP)</option>
+                    <option value="jp_Unicorn">Unicorn (JP)</option>
+                    <option value="jp_Valefor">Valefor (JP)</option>
+                    <option value="jp_Yojimbo">Yojimbo (JP)</option>
+                    <option value="jp_Zeromus">Zeromus (JP)</option>
+
+                    <option value="na_Adamantoise">Adamantoise (NA)</option>
+                    <option value="na_Balmung">Balmung (NA)</option>
+                    <option value="na_Behemoth">Behemoth (NA)</option>
+                    <option value="na_Brynhildr">Brynhildr (NA)</option>
+                    <option value="na_Cactuar">Cactuar (NA)</option>
+                    <option value="na_Coeurl">Coeurl (NA)</option>
+                    <option value="na_Diabolos">Diabolos (NA)</option>
+                    <option value="na_Excalibur">Excalibur (NA)</option>
+                    <option value="na_Exodus">Exodus (NA)</option>
+                    <option value="na_Faerie">Faerie (NA)</option>
+                    <option value="na_Famfrit">Famfrit (NA)</option>
+                    <option value="na_Gilgamesh">Gilgamesh (NA)</option>
+                    <option value="na_Goblin">Goblin (NA)</option>
+                    <option value="na_Hyperion">Hyperion (NA)</option>
+                    <option value="na_Jenova">Jenova (NA)</option>
+                    <option value="na_Lamia">Lamia (NA)</option>
+                    <option value="na_Leviathan">Leviathan (NA)</option>
+                    <option value="na_Malboro">Malboro (NA)</option>
+                    <option value="na_Mateus">Mateus (NA)</option>
+                    <option value="na_Midgardsormr">Midgardsormr (NA)</option>
+                    <option value="na_Sargatanas">Sargatanas (NA)</option>
+                    <option value="na_Siren">Siren (NA)</option>
+                    <option value="na_Ultros">Ultros (NA)</option>
+                    <option value="na_Zalera">Zalera (NA)</option>
+                    
+                    <option value="eu_Cerberus">Cerberus (EU)</option>
+                    <option value="eu_Lich">Lich (EU)</option>
+                    <option value="eu_Louisoix">Louisoix (EU)</option>
+                    <option value="eu_Moogle">Moogle (EU)</option>
+                    <option value="eu_Odin">Odin (EU)</option>
+                    <option value="eu_Omega">Omega (EU)</option>
+                    <option value="eu_Phoenix">Phoenix (EU)</option>
+                    <option value="eu_Ragnarok">Ragnarok (EU)</option>
+                    <option value="eu_Shiva">Shiva (EU)</option>
+                    <option value="eu_Spriggan">Spriggan (EU)</option>
+                    <option value="eu_Twintania">Twintania (EU)</option>
+                    <option value="eu_Zodiark">Zodiark (EU)</option>
+                    
+                    <option value="oc_Bismarck">Bismarck (OC)</option>
+                    <option value="oc_Ravana">Ravana (OC)</option>
+                    <option value="oc_Sephirot">Sephirot (OC)</option>
+                    <option value="oc_Sophia">Sophia (OC)</option>
+                    <option value="oc_Zurvan">Zurvan (OC)</option>
+                  </select>
+            </div>
+        </div>
+
+        <div class="d-grid gap-2 mt-3">
+            <button id="search" class="btn btn-primary" type="button">조회</button>
+        </div>
+
+        <hr>
+
+        <div id="content" class="my-3">
+
+        </div>
+    </div>
+
+    <!-- Optional JavaScript; choose one of the two! -->
+
+    <!-- Option 1: Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+
+    <!-- Option 2: Separate Popper and Bootstrap JS -->
+    <!--script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js" integrity="sha384-7+zCNj/IqJ95wo16oMtfsKbZ9ccEh31eOz1HGyDuCQ6wgnyJNSYdrPa03rtR1zdB" crossorigin="anonymous"></script-->
+    <!--script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.min.js" integrity="sha384-QJHtvGhmr9XOIpI6YVutG+2QOK9T+ZnN4kzFN1RtK3zEFEIsxhlmWl5/YESvpZ13" crossorigin="anonymous"></script-->
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.7.7/handlebars.min.js" integrity="sha512-RNLkV3d+aLtfcpEyFG8jRbnWHxUqVZozacROI4J2F1sTaDqo1dPQYs01OMi1t1w9Y2FdbSCDSQ2ZVdAC8bzgAg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js" integrity="sha512-ElRFoEQdI5Ht6kZvyzXhYG9NqjtkmlkfYk0wr6wHxU9JEHakS7UJZNeml5ALk+8IKlU6jDgMabC3vkumRokgJA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js" integrity="sha512-UXumZrZNiOwnTcZSHLOfcTs0aos2MzBWHXOHOuB0J/R44QB0dwY5JgfbvljXcklVf65Gc4El6RjZ+lnwd2az2g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/1.2.1/chartjs-plugin-zoom.min.js" integrity="sha512-klQv6lz2YR+MecyFYMFRuU2eAl8IPRo6zHnsc9n142TJuJHS8CG0ix4Oq9na9ceeg1u5EkBfZsFcV3U7J51iew==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/2.0.0/chartjs-plugin-annotation.min.js" integrity="sha512-sLZhA8NE4bIPKMnsROQpJTBKVOQf8ie2GMFVXVfcg90tJ0aNhAWxhPyN0BRjwvZ35dSQF7kSzXtCU11KvWvNwQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <script src="https://www.google.com/recaptcha/api.js?render=6LezZkAeAAAAAIP2Yy7drAa1NBCZsMiLFdEJ706F"></script>
+
+    <script src="static/common.js"></script>
+    <script src="static/hps.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-V10Z4MNKXW"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'G-V10Z4MNKXW');
+    </script>
+</body>
+</html>

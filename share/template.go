@@ -1,9 +1,11 @@
 package share
 
 import (
+	"strings"
 	"text/template"
 
 	"github.com/dustin/go-humanize"
+	jsoniter "github.com/json-iterator/go"
 )
 
 var (
@@ -16,8 +18,24 @@ var (
 				return humanize.CommafWithDigits(e, 1)
 			case int:
 				return humanize.Comma(int64(e))
+			case []float32:
+				var sb strings.Builder
+				for _, v := range e {
+					if sb.Len() > 0 {
+						sb.WriteString(", ")
+					}
+					sb.WriteString(humanize.CommafWithDigits(float64(v), 1))
+				}
+				return sb.String()
 			}
 			return ""
+		},
+		"json": func(value interface{}) string {
+			s, err := jsoniter.MarshalToString(value)
+			if err != nil {
+				panic(err)
+			}
+			return s
 		},
 	}
 )

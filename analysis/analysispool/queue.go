@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"ffxiv_check/analysis"
+	"ffxiv_check/analysis/hps"
 	"ffxiv_check/analysis/perfection"
 	"ffxiv_check/share"
 
@@ -88,6 +89,8 @@ func queueWorker() {
 			switch q.reqData.Service {
 			case "perfection":
 				res = perfection.Do(q.ctx, &q.reqData, q.Progress, q.buf)
+			case "hps":
+				res = hps.Do(q.ctx, &q.reqData, q.Progress, q.buf)
 			}
 			select {
 			case <-q.ctx.Done():

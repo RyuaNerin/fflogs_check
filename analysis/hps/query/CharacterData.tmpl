@@ -1,0 +1,27 @@
+{
+	worldData {
+		{{ range $idx, $encounterID := $.EncounterIDList }}
+		e_{{ $idx }}: encounter(id: {{ $encounterID }}) {
+			id
+			name
+		}
+		{{ end }}
+	}
+	characterData {
+		char_info: character(name: "{{ $.CharName }}", serverSlug:"{{ $.CharServer }}", serverRegion: "{{ $.CharRegion }}") {
+			id
+			hidden
+		}
+		char_rankings: character(name: "{{ $.CharName }}", serverSlug:"{{ $.CharServer }}", serverRegion: "{{ $.CharRegion }}") {
+			{{ range $idx, $encounterID := $.EncounterIDList }}
+			r{{ $idx }}: encounterRankings(encounterID: {{ $encounterID }}, difficulty: {{ $.Difficulty }})
+			{{ end }}
+			
+			{{ range $i, $part := $.AdditionalPartitionList }}
+				{{ range $idx, $encounterID := $.EncounterIDList }}
+				r{{ $i }}_{{ $idx }}: encounterRankings(encounterID: {{ $encounterID }}, difficulty: {{ $.Difficulty }}, partition: {{ $part }})
+				{{ end }}
+			{{ end }}
+		}
+	}
+}
