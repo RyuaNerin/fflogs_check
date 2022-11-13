@@ -7,6 +7,7 @@ addHandler(
     function() {
         let preset = '';
         switch (document.querySelector('input[name="encounter"]:checked').value) {
+        case 'abyssos'   : preset = "62"; break;
         case 'asphodelos': preset = "60"; break;
         case 'trial_54'  : preset = "54_trial"; break;
         case 'trial_60'  : preset = "60_trial"; break;
