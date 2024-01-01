@@ -195,7 +195,9 @@ addHandler(
     function() {
         let preset = '';
         switch (document.querySelector('input[name="encounter"]:checked').value) {
-        case 'asphodelos': preset = "60"; break;
+        case 'raids_64': preset = "64"; break;
+        case 'raids_62': preset = "62"; break;
+        case 'raids_60': preset = "60"; break;
         case 'trial_54'  : preset = "54_trial"; break;
         case 'trial_60'  : preset = "60_trial"; break;
         case 'ultimate_6': preset = "6_ulti"; break;
