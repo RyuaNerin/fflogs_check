@@ -11,7 +11,6 @@ import (
 	"text/template"
 	"time"
 
-	"ffxiv_check/analysis/oauth"
 	"ffxiv_check/share"
 
 	"github.com/getsentry/sentry-go"
@@ -25,16 +24,15 @@ const (
 )
 
 var (
-	client *oauth.Client
+	fflogsProxyPoolURL           string
+	fflogsProxyPoolAuthorization string
 )
 
 func init() {
 	godotenv.Load(".env")
 
-	client = oauth.New(
-		os.Getenv("FFLOGS_V2_OAUTH2_CLIENT_ID"),
-		os.Getenv("FFLOGS_V2_OAUTH2_CLIENT_SECRET"),
-	)
+	fflogsProxyPoolURL = os.Getenv("FFLOGS_PROXY_POOL_URL")
+	fflogsProxyPoolAuthorization = os.Getenv("FFLOGS_PROXY_POOL_AUTHORIZATION")
 }
 
 func CallGraphQL(ctx context.Context, tmpl *template.Template, tmplData interface{}, respData interface{}) error {
@@ -87,17 +85,10 @@ func callGraphQLInner(ctx context.Context, tmpl *template.Template, tmplData int
 		return err
 	}
 
-	req, ok := client.NewRequest(
-		ctx,
-		"POST",
-		"https://ko.fflogs.com/api/v2/client",
-		buf,
-	)
-	if !ok {
-		return err
-	}
+	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, fflogsProxyPoolURL, bytes.NewBuffer(buf.Bytes()))
 
 	req.Header.Set("Content-Type", "application/json; encoding=utf-8")
+	req.Header.Set("Authorization", fflogsProxyPoolAuthorization)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		if !share.IsContextClosedError(err) {
@@ -107,10 +98,6 @@ func callGraphQLInner(ctx context.Context, tmpl *template.Template, tmplData int
 		return err
 	}
 	defer resp.Body.Close()
-
-	if resp.StatusCode == http.StatusUnauthorized {
-		client.Reset()
-	}
 
 	err = jsoniter.NewDecoder(resp.Body).Decode(&respData)
 	if err != io.EOF && err != nil {
